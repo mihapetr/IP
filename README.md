@@ -1,6 +1,11 @@
 # IP
 Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
 
+# Organizacija
+
+* *main.py* je glavni source code u kojem će biti aplikacija
+* **je li ok da svatko ima svoj module u koji implementira neki dio zadatka pa sve kombiniramo nakon suglasnosti u *main.py*?**
+
 # Sadržaj
 
 ## 1. interaktivni način rada
