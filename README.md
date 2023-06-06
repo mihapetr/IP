@@ -20,17 +20,25 @@ formula (beskonačan), svijet (beskonačan), relacija (beskonačna), valuacija (
 ## 6. Operatori
 
 ### negacija
+* simbol : ~
 
 ### ili
+* simbol? : ili, or, ||
 
-### box/diamond 
-za kreiranje tipa formula;
+### box
+* simbol : []
+* za kreiranje tipa formula;
 
-### ||- 
-za definiranje istinitosti neke prop. varijable na svijetu (npr. w ||- P1);
+### diamond 
+* simbol : <>
 
-### U
-za dodavanje instance tipa formula u instancu tipa skupFormula (npr. skupFormula S = f1 U f2 gdje smo ranije definirali formula f1 = nesto1, f2 = nesto2)
+### forsira
+* simbol : ||-, |-
+* za definiranje istinitosti neke prop. varijable na svijetu (npr. w ||- P1);
+
+### unija
+* simbol : U
+* za dodavanje instance tipa formula u instancu tipa skupFormula (npr. skupFormula S = f1 U f2 gdje smo ranije definirali formula f1 = nesto1, f2 = nesto2)
 
 ### ostatak?
 Ostatak može biti korištenje ostalih logičkih veznika i korištenje optimizatora koji ih pretvara u negaciju i ili
