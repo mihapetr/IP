@@ -35,6 +35,12 @@ formula (beskonačan), svijet (beskonačan), relacija (beskonačna), valuacija (
 ### forsira
 * simbol : ||-, |-
 * za definiranje istinitosti neke prop. varijable na svijetu (npr. w ||- P1);
+* ? možda želomo analogon tome, odnosno imati operator \<naziv\>
+  
+### \<naziv\>
+* simbol : -|, -||
+* upotreba : P1 -| w1, w2, ..., wn 
+	* značenje : V(P1) = {w1, w2, ..., wn} 
 
 ### unija
 * simbol : U
