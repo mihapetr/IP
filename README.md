@@ -73,7 +73,7 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 ### valuacija
 * simbol? : `-|, -||`
 * upotreba : `p4 -| {4 2 5 11 0}` alterantivno `p4 -| {w4 w2 w5 w11 w0}` 
-	* značenje : $V(P4) = \{w4, w2, w5, w11, w0\}$
+	* značenje : V(P4) = {w4, w2, w5, w11, w0}
 
 ### unija
 * simbol : U
