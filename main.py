@@ -1,1 +1,1 @@
-import miha_module
+from miha_module import *
