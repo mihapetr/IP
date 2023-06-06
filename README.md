@@ -30,7 +30,7 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 ## 5. Tipovi podataka
 ### propozicionalna varijabla (beskonačan)
 * naziv oblika `p#` gdje je # neki prirodan broj
-\\ ------------ PRIJEDLOG -----------------
+* ------------ PRIJEDLOG -----------------
 * naziv oblika `( _<riječ> )+ `
 	* npr. `_pada_kisa` 
 	* kako bismo mogli semantički razmišljati o njima
@@ -39,13 +39,13 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 ### formula (beskonačan)
 * bilo koji naziv, ali da je prvo slovo malo i da nije `p` ili `w`
 * definicija kao npr. `primjerFormule = p0 -> !(<>p1 -> p2)`
-\\ ------------ PRIJEDLOG ---------------------------
+* ------------ PRIJEDLOG ---------------------------
 * ako prop. var. počinju s `_`, a svijetovi s `$`, formule mogu imati proizvoljan početak (alfanumerički)
 
 ### svijet (beskonačan)
 * naziv oblika `w#` gdje je # neki prirodan broj
 * ili da naziv bude samo prirodan broj?
-\\ ------------ PRIJEDLOG ----------------
+* ------------ PRIJEDLOG ----------------
 * naziv oblika `$<riječ> (_<riječ>)+`
 	* npr. `$oblaci`
 	* i sada je  jako intuitivno razmišljati o izrazu `$oblacni |- {_pada_kisa _nema_sunca}` 
