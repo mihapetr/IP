@@ -15,7 +15,14 @@ for i while petlja + if
 definicija funkcija i funkcijski pozivi. Primjer funkcija: ... 
 
 ## 5. Tipovi podataka
-formula (beskonačan), svijet (beskonačan), relacija (beskonačna), valuacija (beskonačna), KripkeovModel (beskonačan), konstante (true i false), skupFormula (beskonačan)
+### propozicionalna varijabla (beskonačan)
+### formula (beskonačan)
+### svijet (beskonačan)
+### relacija (beskonačna)
+### valuacija (beskonačna)
+### KripkeovModel (beskonačan)
+### konstante (true i false)
+### skupFormula (beskonačan)
 
 ## 6. Operatori
 
