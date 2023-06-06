@@ -1,5 +1,10 @@
 # IP
 Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
+* provjeravač *globalne istinitosti* na *modelu*
+* provjeravač *ispunjivosti na modelu*
+* provjeravač *valjanosti na okviru* (glavni test)
+* podrška za definiranje *nosača*, *relacija*, *valuacija* preko .csv datoteka
+	* vidi [odjeljak](#7-datoteke)
 
 # Organizacija
 
@@ -47,8 +52,8 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 * ili da naziv bude samo prirodan broj?
 * ------------ PRIJEDLOG ----------------
 * naziv oblika `$<riječ> (_<riječ>)+`
-	* npr. `$oblaci`
-	* i sada je  jako intuitivno razmišljati o izrazu `$oblacni |- {_pada_kisa _nema_sunca}` 
+	* npr. `$oblacni_svijet`
+	* i sada je  jako intuitivno razmišljati o izrazu `$oblacni_svijet |- {_pada_kisa _nema_sunca}` 
 
 ### relacija (beskonačna)
 * naziv oblika R# gdje je # prirodan broj
@@ -100,6 +105,7 @@ Ostatak može biti korištenje ostalih logičkih veznika i korištenje optimizat
 
 ## 7. Datoteke
 Unos iz datoteke i ispis u datoteku.
+* bilo bi korisno 
 
-## 8. Kkomentari
+## 8. Komentari
 Jednolinijski.
