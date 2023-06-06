@@ -111,6 +111,7 @@ Unos iz datoteke i ispis u datoteku.
 * za definiciju *okvira* je dovoljna datoteka s relacijom jer su elementi *nosača* implicitno zadani kroz tablicu
 * za definiciju *modela* su potrebna oba tipa datoteke
 * **preporučeno je editirati datoteke u excelu**
+* detalji u direktoriju *primjeri*
 
 ## 8. Komentari
 Jednolinijski.
