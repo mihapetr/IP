@@ -10,7 +10,7 @@ Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
 ```
 > <prvi dio naredbe> \n
 > ... <drugi dio> \n
-> ... <treci dio>;
+> ... <treci dio>; \n
 // nakon ovoga je unos gotov
 ```
 
