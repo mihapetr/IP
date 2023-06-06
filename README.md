@@ -4,7 +4,7 @@ Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
 * provjeravač *ispunjivosti na modelu*
 * provjeravač *valjanosti na okviru* (glavni test)
 * podrška za definiranje *nosača*, *relacija*, *valuacija* preko .csv datoteka
-	* vidi [odjeljak](#7-datoteke)
+	* vidi [odjeljak o datotekama](#7-datoteke)
 
 # Organizacija
 
