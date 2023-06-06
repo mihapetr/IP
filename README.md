@@ -9,7 +9,7 @@ Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
 	* primjer stanja konzole: 
 ```
 > <prvi dio naredbe> \n
-> ... <drugi dio>
+> ... <drugi dio> \n
 > ... <treci dio>;
 // nakon ovoga je unos gotov
 ```
