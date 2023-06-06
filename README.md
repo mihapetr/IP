@@ -4,7 +4,15 @@ Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
 # Sadržaj
 
 ## 1. interaktivni način rada
-poslije svake naredbe dolazi znak ;
+* poslije svake naredbe dolazi znak `;`
+* ako korisnik unese liniju na kraju koje ne stoji `;`, ispisuje se nešto poput `...` kao naznaka za prelazak u novi red
+	* primjer stanja konzole: 
+```
+> <prvi dio naredbe> \n
+> ... <drugi dio>
+> ... <treci dio>;
+// nakon ovoga je unos gotov
+```
 
 ## 2. Aritmetika
 
