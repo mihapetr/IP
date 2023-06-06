@@ -27,6 +27,12 @@ use_frame <ime_okvira>;
 // sve dalje se odnosi na taj okvir
 ``` 
 
+## definiranje valuacija, relacija, okvira, modela
+* jako puno poodataka je potrebno za imalo komplicirane modele
+* naravno nakon što čovjek ima valuaciju i relaciju lako je napraviti model i okvir 
+* napisao sam neke ideje u sekciju o radu s datotekama : odnosi se na olakšanje korisniku da definira ove objekte pomoću postojećih podataka
+* ne vidim kako bi bilo efikasno ručno definirati svaku valuaciju i relaciju ručno liniju po liniju!
+
 # Sadržaj
 
 ## 1. interaktivni način rada
