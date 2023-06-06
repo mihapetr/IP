@@ -53,27 +53,27 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 ## 6. Operatori
 
 ### negacija
-* simbol : ~
+* simbol : `~`
 
 ### ili
-* simbol? : ili, or, ||
+* simbol? : `ili, or, ||`
 
 ### box
-* simbol : []
+* simbol : `[]`
 * za kreiranje tipa formula;
 
 ### diamond 
-* simbol : <>
+* simbol : `<>`
 
 ### forsira
-* simbol : ||-, |-
+* simbol? : `||-, |-`
 * za definiranje istinitosti neke prop. varijable na svijetu (npr. w ||- P1);
-* ? možda želomo analogon tome, odnosno imati operator \<naziv\>
+* ? možda želomo analogon tome, odnosno imati operator *valuacija*
   
-### \<naziv\>
-* simbol : -|, -||
-* upotreba : P1 -| w1, w2, ..., wn 
-	* značenje : V(P1) = {w1, w2, ..., wn} 
+### valuacija
+* simbol? : `-|, -||`
+* upotreba : `p4 -| {4 2 5 11 0}` alterantivno `p4 -| {w4 w2 w5 w11 w0}` 
+	* značenje : $V(P4) = {w4, w2, w5, w11, w0}$
 
 ### unija
 * simbol : U
