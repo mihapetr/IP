@@ -16,8 +16,18 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 
 ## 5. Tipovi podataka
 ### propozicionalna varijabla (beskonačan)
+* naziv oblika p# gdje je # neki prirodan broj
+
+
 ### formula (beskonačan)
+* bilo koji naziv, ali da je prvo slovo malo i da nije `p` ili `w`
+
+
 ### svijet (beskonačan)
+* naziv oblika w# gdje je # neki prirodan broj
+* ili da naziv bude samo prirodan broj?
+
+
 ### relacija (beskonačna)
 ### valuacija (beskonačna)
 ### KripkeovModel (beskonačan)
