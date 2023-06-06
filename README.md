@@ -29,7 +29,13 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 
 
 ### relacija (beskonačna)
+* naziv oblika R# gdje je # prirodan broj
+* definirana kao niz naredbi oblika npr. `w2 R1 w3` ili samo `2 R1 3`
+
+
 ### valuacija (beskonačna)
+* definirana kao niz naredbi oblika npr. `w2 |- p3` ili `2 |- p3` ili `2 ||- p3`
+
 ### KripkeovModel (beskonačan)
 ### konstante (true i false)
 ### skupFormula (beskonačan)
