@@ -18,23 +18,22 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 ### propozicionalna varijabla (beskonačan)
 * naziv oblika `p#` gdje je # neki prirodan broj
 
-
 ### formula (beskonačan)
 * bilo koji naziv, ali da je prvo slovo malo i da nije `p` ili `w`
-
+* definicija kao npr. `primjerFormule = p0 -> !(<>p1 -> p2)`
 
 ### svijet (beskonačan)
 * naziv oblika `w#` gdje je # neki prirodan broj
 * ili da naziv bude samo prirodan broj?
 
-
 ### relacija (beskonačna)
 * naziv oblika R# gdje je # prirodan broj
 * definirana kao niz naredbi oblika npr. `w2 R1 w3` ili samo `2 R1 3`
 
-
 ### valuacija (beskonačna)
 * definirana kao niz naredbi oblika npr. `w2 |- p3` ili `2 |- p3` ili `2 ||- p3`
+* alternativno, koristimo agregirani prikaz `w4 |- {p1 p2 p5 p17}` 
+* u reverznoj notaciji: `p4 -| {4 2 5 11 0}`
 
 ### KripkeovModel (beskonačan)
 ### konstante (true i false)
