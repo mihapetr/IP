@@ -1,0 +1,5 @@
+relacija	svijet1	svijet2	svijet3	svijet4
+svijet1	R		R	
+svijet2	R			
+svijet3		R		
+svijet4				R

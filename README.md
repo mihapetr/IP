@@ -105,7 +105,12 @@ Ostatak može biti korištenje ostalih logičkih veznika i korištenje optimizat
 
 ## 7. Datoteke
 Unos iz datoteke i ispis u datoteku.
-* bilo bi korisno 
+* bilo bi korisno imati podršku učitavanja modela (nosača, relacija, valuacija) iz datoteka
+* primjeri su dani u direktoriju *primjeri*
+* datoteka koja sadrži *valuaciju* ima na kordinati 0,0 (nulti redak, nulti stupac) napisano "valuacija"; analogno za *relaciju*
+* za definiciju *okvira* je dovoljna datoteka s relacijom jer su elementi *nosača* implicitno zadani kroz tablicu
+* za definiciju *modela* su potrebna oba tipa datoteke
+* **preporučeno je editirati datoteke u excelu**
 
 ## 8. Komentari
 Jednolinijski.
