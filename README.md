@@ -11,6 +11,22 @@ Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
 * *main.py* je glavni source code u kojem će biti aplikacija
 * **je li ok da svatko ima svoj module u koji implementira neki dio zadatka pa sve kombiniramo nakon suglasnosti u *main.py*?**
 
+# Problemi
+
+## vezanost *forsiranja* i *modela*
+* operatori `|-` i `-|` podrazumijevaju neki *model* za koji se definira valuacija
+* moramo nekako naznačiti o kojem *modelu* se radi kod korištenja tih operatora
+* jedna opcija je na globalnoj razini koristiti neku naredbu kao npr. 
+```
+use_model <ime_modela>;
+// nakon ove linije se sve naredbe koje zahtjevaju <ime_modela> odnose na taj model
+```
+* analogno za okvire
+```
+use_frame <ime_okvira>;
+// sve dalje se odnosi na taj okvir
+``` 
+
 # Sadržaj
 
 ## 1. interaktivni način rada
@@ -46,6 +62,8 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 * definicija kao npr. `primjerFormule = p0 -> !(<>p1 -> p2)`
 * ------------ PRIJEDLOG ---------------------------
 * ako prop. var. počinju s `_`, a svijetovi s `$`, formule mogu imati proizvoljan početak (alfanumerički)
+* omogućiti definiranje formula pomoću drugih formula (iz rekurzivne definicije formule)
+	* npr. `novaFormula = f1 <veznik> f2`
 
 ### svijet (beskonačan)
 * naziv oblika `w#` gdje je # neki prirodan broj
@@ -65,6 +83,7 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 * u reverznoj notaciji: `p4 -| {4 2 5 11 0}`
 
 ### KripkeovModel (beskonačan)
+
 ### konstante (true i false)
 * oznake npr. `T` i `F`
 
