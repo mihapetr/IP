@@ -34,19 +34,14 @@ Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
 * *main.py* je glavni source code u kojem će biti aplikacija
 * svatko ima svoj modul na kojem radi
 
-# Problemi
-
-## vezanost *forsiranja* i *modela*
-* operatori `|-` i `-|` podrazumijevaju neki *model* za koji se definira valuacija
-* moramo nekako naznačiti o kojem *modelu* se radi kod korištenja tih operatora
-* jedna opcija je na globalnoj razini koristiti neku naredbu kao npr. 
+## Korištenje modela
 ```
-use <ime_modela>;
+koristi <ime_modela>;
 ```
 * memorija['using'] = <ime_modela>
 ## definiranje valuacija, relacija, okvira, modela
 * sve se obavlja uz pomoć učitavanja iz datoteke
-* proširujemo 
+* proširujemo dolje definiranim operatorima 
 
 ## Organizacija tipova podataka u memoriji
 * svijet (klasa): skup sljedbenika (ime skupa: sljedbenici) , skup propozicionalnih varijabli (ime skupa: činjenice); test (self, formula)
