@@ -1,4 +1,4 @@
-# opčenito
+# općenito
 * editirati u excelu ili nekom srodnom programu radi lakše vizualizacije
 
 # relacije
