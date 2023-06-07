@@ -1,15 +1,37 @@
 # IP
 Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
-* provjeravač *istinitosti formule* na *konačnom modelu* 
-* provjeravač *ispunjivosti formule na konačnom modelu*
-* provjeravač *valjanosti formule na okviru* (glavni test)
-* podrška za definiranje *nosača*, *relacija*, *valuacija* preko .csv datoteka
-	* vidi [odjeljak o datotekama](#7-datoteke)
+
+## Osnovno: istinitost formule na modelu
+* nužno: unutar jezika implementirati mogućnost provjere istinitosti formule na određenom modelu i svijetu unutar njega
+
+## Valjanost formule na konačnim modelima
+* iterativno?
+* istražiti glavni test za konačne modele
+
+## Svojstva relacije
+* nužno: valjanost formule na konačnim modelima
+
+## Provjera dokaza
+* provjera sheme aksioma za formulu
+	* u AST-ovima usporedba stabala
+
+* modus ponens
+	* provjera svih mogućih parova iznad dotične formule zadovoljavaju li m.p.
+		* prolazak kroz sve formule i provjera je li kondicional i je li desno dijete izvedena formula
+	* **na najnižoj razini su samo KONDICIONAL i NEGACIJA**	
+	* optimizator pretvara svaku formulu u ekvivalentnu s gornjim veznicima
+* redosljed provjere :
+	1. A1 : A -> (B -> A)
+	2. A3: (~B -> ~A) -> (A -> B)
+	3. K: [](A -> B) -> ([]A -> []B)
+	4. A2: ...
+	5. Nužnost
+	6. Modus ponens 
 
 # Organizacija
 
 * *main.py* je glavni source code u kojem će biti aplikacija
-* **je li ok da svatko ima svoj module u koji implementira neki dio zadatka pa sve kombiniramo nakon suglasnosti u *main.py*?**
+* svatko ima svoj modul na kojem radi
 
 # Problemi
 
@@ -28,10 +50,8 @@ use_frame <ime_okvira>;
 ``` 
 
 ## definiranje valuacija, relacija, okvira, modela
-* jako puno poodataka je potrebno za imalo komplicirane modele
-* naravno nakon što čovjek ima valuaciju i relaciju lako je napraviti model i okvir 
-* napisao sam neke ideje u sekciju o radu s datotekama : odnosi se na olakšanje korisniku da definira ove objekte pomoću postojećih podataka
-* ne vidim kako bi bilo efikasno ručno definirati svaku valuaciju i relaciju ručno liniju po liniju!
+* sve se obavlja uz pomoć učitavanja iz datoteke
+* proširujemo 
 
 # Sadržaj
 
@@ -98,6 +118,17 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 
 ## 6. Operatori
 
+### proširivanje skupa istinitih propozicionalnih varijabli na svijetu
+#### svijet je s lijeve strane simbola, a s desne prop. varijabla
+* simbol: `|=`
+* značenje: w1 |= P10 gdje je P10 prop. varijabla koja prije toga "nije bila" u domeni valuacije  
+* dualni simbol: `|~` gdje npr. w1 |~ P10 
+#### prop. varijabla s lijeve strane simbola, a s desne svijet
+* simbol: `=|`
+* značenje: P10 =| w1 gdje je P10 prop. varijabla koja prije toga "nije bila" u domeni valuacije  
+* dualni simbol: `~|` gdje npr. P10 ~| w1 
+
+
 ### negacija
 * simbol : `~`
 
@@ -137,6 +168,8 @@ Unos iz datoteke i ispis u datoteku.
 * za definiciju *modela* su potrebna oba tipa datoteke
 * **preporučeno je editirati datoteke u excelu**
 * detalji u direktoriju *primjeri*
+### Učitavanje dokaza
+* pogledati Provjera dokaza
 
 ## 8. Komentari
 Jednolinijski.
