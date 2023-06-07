@@ -1,12 +1,11 @@
 # Sadržaj
 
-Projekt iz kolegija ***Interpretacija programa*** u kojem će biti implementiran softver za praktičan rad s osnovnim objektima Modalne logike (propozicionalne varijable, modalne formule, Kripkeovi modeli, valuacije...). Potpuna prilagođenost softvera sintaksi Modalne logike omogućit će i proučavanje njezine semantike, a samim time i dobivanje osnovnih teorijskih rezultata koji će biti obrazloženi u nastavku, kao sama svrha razvoja ovog softvera. 
-Karakteristike softvera:
+Projekt iz kolegija ***Interpretacija programa*** u kojem će biti implementiran softver za praktičan rad s osnovnim objektima Modalne logike (propozicionalne varijable, modalne formule, Kripkeovi modeli, valuacije...). Potpuna prilagođenost softvera sintaksi Modalne logike omogućit će i proučavanje njezine semantike, a samim time i dobivanje osnovnih teorijskih rezultata što je i sama svrha razvoja ovog softvera. Ipak, prvo je potrebno promotriti njegove karakteristike i mogućnosti.
 
-## 1. interaktivni način rada
+## 1. Interaktivni način rada
 * poslije svake naredbe dolazi znak `;`
 * ako korisnik unese liniju na kraju koje ne stoji `;`, ispisuje se nešto poput `...` kao naznaka za prelazak u novi red
-	* primjer stanja konzole: 
+* primjer stanja konzole: 
 ```
 > <prvi dio naredbe> \n
 > ... <drugi dio> \n
@@ -17,81 +16,72 @@ Karakteristike softvera:
 ## 2. Aritmetika
 
 ## 3. Petlje 
-for i while petlja + if
+* if + else; petlje: while, for; if, while, for sadržavaju uvjet i tijelo koje se nalazi unutar vitičastih zagrada
 
 ## 4. Funkcije
-definicija funkcija i funkcijski pozivi. Primjer funkcija: ... 
+* definicija funkcija i funkcijski pozivi. Primjeri funkcija bit će sami algoritmi čiji će izlaz biti važni teorijski rezultati
 
 ## 5. Tipovi podataka
-### propozicionalna varijabla (beskonačan)
+### a) propozicionalna varijabla 
 * prvi znak naziva: $
+* podtip tipa *formula*
 
-### formula (beskonačan)
+### b) formula 
 * prvi znak naziva: malo slovo abecede
 
-### svijet (beskonačan)
+### c) svijet 
 * prvi znak naziva: @ 
 
-### model (beskonačan)
+### d) model 
 * Prvi znak naziva: veliko slovo abecede
 
-### konstante (true i false)
-* oznake npr. `T` i `F`
+### e) konstante (true i false)
+* oznake: `T` i `F`
 
 ## 6. Operatori
 
-### Proširivanje valuacije
+### a) proširivanje valuacije
 #### proširivanje skupa istinitih propozicionalnih varijabli na svijetu
-##### svijet je s lijeve strane simbola, a s desne prop. varijabla
+* napomena: svijet je s lijeve strane simbola, a s desne prop. varijabla
 * simbol: `|=`
 * značenje: w1 |= P10 gdje je P10 prop. varijabla koja prije toga "nije bila" u domeni valuacije  
 * dualni simbol: `|~` gdje npr. w1 |~ P10 
-##### prop. varijabla s lijeve strane simbola, a s desne svijet
+Alternativno:
+* napomena: prop. varijabla je s lijeve strane simbola, a s desne svijet
 * simbol: `=|`
 * značenje: P10 =| w1 gdje je P10 prop. varijabla koja prije toga "nije bila" u domeni valuacije  
 * dualni simbol: `~|` gdje npr. P10 ~| w1 
 
-### Provjera istinitosti
+### b) provjera istinitosti
 * simbol: `?`
 * pozivanje: formula ? @svijet
 
-### Negacija
+### c) negacija
 * simbol : `~`
 
-### Ili
-* simbol? : `|`
+### d) ili
+* simbol : `|`
 
-### Box
+### e) box
 * simbol : `[]`
-* za kreiranje tipa formula;
 
-### Diamond 
+### f) diamond 
 * simbol : `<>`
 
-### Assigment
+### g) assignment
 * simbol : `=`
 
-### Forsira i valuacija
-* za definiranje istinitosti neke prop. varijable na svijetu: vidi *Proširivanje valuacije*
-
-### Ostatak
-* optimizator: pretvara korisnikove formule u njima ekvivalentne koje koriste operatore `[], ->, ~`
-
 ## 7. Datoteke
-Unos iz datoteke i ispis u datoteku.
-* bilo bi korisno imati podršku učitavanja modela (nosača, relacija, valuacija) iz datoteka
-* primjeri su dani u direktoriju *primjeri*
-* datoteka koja sadrži *valuaciju* ima na kordinati 0,0 (nulti redak, nulti stupac) napisano "valuacija"; analogno za *relaciju*
-* za definiciju *okvira* je dovoljna datoteka s relacijom jer su elementi *nosača* implicitno zadani kroz tablicu
-* za definiciju *modela* su potrebna oba tipa datoteke
-* **preporučeno je editirati datoteke u excelu**
-* detalji u direktoriju *primjeri*
-### Učitavanje dokaza
-* pogledati Provjera dokaza
-### Zapisivanje i učitavanje modela
+* unos iz datoteke i ispis u datoteku
+* učitavanje dokaza
+* podrška učitavanja modela (nosača, relacija, valuacija) i spremanje u datoteku
+* za definiciju *modela* potrebna su dva tipa datoteke: u jednom je zapisana valuacija, a u drugom relacija
+* **preporučeno je editirati datoteke za definiranje modela u excelu**
 
 ## 8. Komentari
-Jednolinijski.
+* jednolinijski
+
+# Uredi ovo ispod
 
 ## Osnovno: istinitost formule na modelu
 * nužno: unutar jezika implementirati mogućnost provjere istinitosti formule na određenom modelu i svijetu unutar njega
@@ -138,4 +128,8 @@ koristi <ime_modela>;
 ## Organizacija tipova podataka u memoriji
 * svijet (klasa): skup sljedbenika (ime skupa: sljedbenici) , skup propozicionalnih varijabli (ime skupa: činjenice); test (self, formula)
 * model (klasa): skup svjetova (ime skupa: nosač)
+
+### Ostatak
+* optimizator: pretvara korisnikove formule u njima ekvivalentne koje koriste operatore `[], ->, ~`
+
 
