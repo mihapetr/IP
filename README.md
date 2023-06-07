@@ -1,6 +1,7 @@
 # Sadržaj
 
 Projekt iz kolegija ***Interpretacija programa*** u kojem će biti implementiran softver za praktičan rad s osnovnim objektima Modalne logike (propozicionalne varijable, modalne formule, Kripkeovi modeli, valuacije...). Potpuna prilagođenost softvera sintaksi Modalne logike omogućit će i proučavanje njezine semantike, a samim time i dobivanje osnovnih teorijskih rezultata koji će biti obrazloženi u nastavku, kao sama svrha razvoja ovog softvera. 
+Karakteristike softvera:
 
 ## 1. interaktivni način rada
 * poslije svake naredbe dolazi znak `;`
