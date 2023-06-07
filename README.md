@@ -1,8 +1,8 @@
 # IP
 Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
-* provjeravač *globalne istinitosti* na *modelu*
-* provjeravač *ispunjivosti na modelu*
-* provjeravač *valjanosti na okviru* (glavni test)
+* provjeravač *istinitosti formule* na *konačnom modelu* 
+* provjeravač *ispunjivosti formule na konačnom modelu*
+* provjeravač *valjanosti formule na okviru* (glavni test)
 * podrška za definiranje *nosača*, *relacija*, *valuacija* preko .csv datoteka
 	* vidi [odjeljak o datotekama](#7-datoteke)
 
