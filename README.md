@@ -1,52 +1,6 @@
 # IP
 Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
 
-## Osnovno: istinitost formule na modelu
-* nužno: unutar jezika implementirati mogućnost provjere istinitosti formule na određenom modelu i svijetu unutar njega
-
-## Valjanost formule na konačnim modelima
-* iterativno?
-* istražiti glavni test za konačne modele
-
-## Svojstva relacije
-* nužno: valjanost formule na konačnim modelima
-
-## Provjera dokaza
-* provjera sheme aksioma za formulu
-	* u AST-ovima usporedba stabala
-
-* modus ponens
-	* provjera svih mogućih parova iznad dotične formule zadovoljavaju li m.p.
-		* prolazak kroz sve formule i provjera je li kondicional i je li desno dijete izvedena formula
-	* **na najnižoj razini su samo KONDICIONAL i NEGACIJA**	
-	* optimizator pretvara svaku formulu u ekvivalentnu s gornjim veznicima
-* redosljed provjere (algoritam) :
-	1. A1 : A -> (B -> A)
-	2. A3: (~B -> ~A) -> (A -> B)
-	3. K: [](A -> B) -> ([]A -> []B)
-	4. A2: ...
-	5. Nužnost
-	6. Modus ponens 
-* potrebne funkcije za ostvarenje gornjeg algoritma: usporedi(AST f1, AST f2) {usporedi jesu li dvije formule jednake}, razdvoji(AST f) {korijen stabla}
-
-# Organizacija
-
-* *main.py* je glavni source code u kojem će biti aplikacija
-* svatko ima svoj modul na kojem radi
-
-## Korištenje modela
-```
-koristi <ime_modela>;
-```
-* memorija['using'] = <ime_modela>
-## definiranje valuacija, relacija, okvira, modela
-* sve se obavlja uz pomoć učitavanja iz datoteke
-* proširujemo dolje definiranim operatorima 
-
-## Organizacija tipova podataka u memoriji
-* svijet (klasa): skup sljedbenika (ime skupa: sljedbenici) , skup propozicionalnih varijabli (ime skupa: činjenice); test (self, formula)
-* model (klasa): skup svjetova (ime skupa: nosač)
-
 # Sadržaj
 
 ## 1. interaktivni način rada
@@ -138,3 +92,50 @@ Unos iz datoteke i ispis u datoteku.
 
 ## 8. Komentari
 Jednolinijski.
+
+## Osnovno: istinitost formule na modelu
+* nužno: unutar jezika implementirati mogućnost provjere istinitosti formule na određenom modelu i svijetu unutar njega
+
+## Valjanost formule na konačnim modelima
+* iterativno?
+* istražiti glavni test za konačne modele
+
+## Svojstva relacije
+* nužno: valjanost formule na konačnim modelima
+
+## Provjera dokaza
+* provjera sheme aksioma za formulu
+	* u AST-ovima usporedba stabala
+
+* modus ponens
+	* provjera svih mogućih parova iznad dotične formule zadovoljavaju li m.p.
+		* prolazak kroz sve formule i provjera je li kondicional i je li desno dijete izvedena formula
+	* **na najnižoj razini su samo KONDICIONAL i NEGACIJA**	
+	* optimizator pretvara svaku formulu u ekvivalentnu s gornjim veznicima
+* redosljed provjere (algoritam) :
+	1. A1 : A -> (B -> A)
+	2. A3: (~B -> ~A) -> (A -> B)
+	3. K: [](A -> B) -> ([]A -> []B)
+	4. A2: ...
+	5. Nužnost
+	6. Modus ponens 
+* potrebne funkcije za ostvarenje gornjeg algoritma: usporedi(AST f1, AST f2) {usporedi jesu li dvije formule jednake}, razdvoji(AST f) {korijen stabla}
+
+# Organizacija
+
+* *main.py* je glavni source code u kojem će biti aplikacija
+* svatko ima svoj modul na kojem radi
+
+## Korištenje modela
+```
+koristi <ime_modela>;
+```
+* memorija['using'] = <ime_modela>
+## definiranje valuacija, relacija, okvira, modela
+* sve se obavlja uz pomoć učitavanja iz datoteke
+* proširujemo dolje definiranim operatorima 
+
+## Organizacija tipova podataka u memoriji
+* svijet (klasa): skup sljedbenika (ime skupa: sljedbenici) , skup propozicionalnih varijabli (ime skupa: činjenice); test (self, formula)
+* model (klasa): skup svjetova (ime skupa: nosač)
+
