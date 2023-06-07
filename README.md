@@ -1,6 +1,8 @@
 # IP
 Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
 
+## Tipovi podataka
+
 ## Osnovno: istinitost formule na modelu
 * nužno: unutar jezika implementirati mogućnost provjere istinitosti formule na određenom modelu i svijetu unutar njega
 
@@ -20,13 +22,14 @@ Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
 		* prolazak kroz sve formule i provjera je li kondicional i je li desno dijete izvedena formula
 	* **na najnižoj razini su samo KONDICIONAL i NEGACIJA**	
 	* optimizator pretvara svaku formulu u ekvivalentnu s gornjim veznicima
-* redosljed provjere :
+* redosljed provjere (algoritam) :
 	1. A1 : A -> (B -> A)
 	2. A3: (~B -> ~A) -> (A -> B)
 	3. K: [](A -> B) -> ([]A -> []B)
 	4. A2: ...
 	5. Nužnost
 	6. Modus ponens 
+* potrebne funkcije za ostvarenje gornjeg algoritma: usporedi(AST f1, AST f2) {usporedi jesu li dvije formule jednake}, razdvoji(AST f) {korijen stabla}
 
 # Organizacija
 
@@ -76,6 +79,7 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 
 ## 5. Tipovi podataka
 ### propozicionalna varijabla (beskonačan)
+* prvi znak naziva: $
 * naziv oblika `p#` gdje je # neki prirodan broj
 * ------------ PRIJEDLOG -----------------
 * naziv oblika `( _<riječ> )+ `
@@ -84,6 +88,7 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 	* radi se o proširenju jer i dalje imamo mogućnost `_p#`
 
 ### formula (beskonačan)
+* prvi znak naziva: malo slovo abecede
 * bilo koji naziv, ali da je prvo slovo malo i da nije `p` ili `w`
 * definicija kao npr. `primjerFormule = p0 -> !(<>p1 -> p2)`
 * ------------ PRIJEDLOG ---------------------------
@@ -92,6 +97,7 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 	* npr. `novaFormula = f1 <veznik> f2`
 
 ### svijet (beskonačan)
+* prvi znak naziva: @
 * naziv oblika `w#` gdje je # neki prirodan broj
 * ili da naziv bude samo prirodan broj?
 * ------------ PRIJEDLOG ----------------
@@ -99,65 +105,44 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 	* npr. `$oblacni_svijet`
 	* i sada je  jako intuitivno razmišljati o izrazu `$oblacni_svijet |- {_pada_kisa _nema_sunca}` 
 
-### relacija (beskonačna)
-* naziv oblika R# gdje je # prirodan broj
-* definirana kao niz naredbi oblika npr. `w2 R1 w3` ili samo `2 R1 3`
-
-### valuacija (beskonačna)
-* definirana kao niz naredbi oblika npr. `w2 |- p3` ili `2 |- p3` ili `2 ||- p3`
-* alternativno, koristimo agregirani prikaz `w4 |- {p1 p2 p5 p17}` 
-* u reverznoj notaciji: `p4 -| {4 2 5 11 0}`
-
-### KripkeovModel (beskonačan)
+### Model (beskonačan)
+* Prvi znak naziva: veliko slovo abecede
 
 ### konstante (true i false)
 * oznake npr. `T` i `F`
 
-### skupFormula (beskonačan)
-* bilo koji naziv, ali da je prvo slovo veliko i da nije `T`, `F`, ni `R`
-
 ## 6. Operatori
 
-### proširivanje skupa istinitih propozicionalnih varijabli na svijetu
-#### svijet je s lijeve strane simbola, a s desne prop. varijabla
+### Proširivanje valuacije
+#### proširivanje skupa istinitih propozicionalnih varijabli na svijetu
+##### svijet je s lijeve strane simbola, a s desne prop. varijabla
 * simbol: `|=`
 * značenje: w1 |= P10 gdje je P10 prop. varijabla koja prije toga "nije bila" u domeni valuacije  
 * dualni simbol: `|~` gdje npr. w1 |~ P10 
-#### prop. varijabla s lijeve strane simbola, a s desne svijet
+##### prop. varijabla s lijeve strane simbola, a s desne svijet
 * simbol: `=|`
 * značenje: P10 =| w1 gdje je P10 prop. varijabla koja prije toga "nije bila" u domeni valuacije  
 * dualni simbol: `~|` gdje npr. P10 ~| w1 
 
 
-### negacija
+### Negacija
 * simbol : `~`
 
-### ili
-* simbol? : `ili, or, ||`
+### Ili
+* simbol? : `|`
 
-### box
+### Box
 * simbol : `[]`
 * za kreiranje tipa formula;
 
-### diamond 
+### Diamond 
 * simbol : `<>`
 
-### forsira
-* simbol? : `||-, |-`
-* za definiranje istinitosti neke prop. varijable na svijetu (npr. w ||- P1);
-* ? možda želomo analogon tome, odnosno imati operator *valuacija*
-  
-### valuacija
-* simbol? : `-|, -||`
-* upotreba : `p4 -| {4 2 5 11 0}` alterantivno `p4 -| {w4 w2 w5 w11 w0}` 
-	* značenje : V(P4) = {w4, w2, w5, w11, w0}
+### Forsira i valuacija
+* za definiranje istinitosti neke prop. varijable na svijetu: vidi *Proširivanje valuacije*
 
-### unija
-* simbol : U
-* za dodavanje instance tipa formula u instancu tipa skupFormula (npr. skupFormula S = f1 U f2 gdje smo ranije definirali formula f1 = nesto1, f2 = nesto2)
-
-### ostatak?
-Ostatak može biti korištenje ostalih logičkih veznika i korištenje optimizatora koji ih pretvara u negaciju i ili
+### Ostatak
+* optimizator: pretvara korisnikove formule u njima ekvivalentne koje koriste operatore `[], ->, ~`
 
 ## 7. Datoteke
 Unos iz datoteke i ispis u datoteku.
