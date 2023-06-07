@@ -41,18 +41,16 @@ Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
 * moramo nekako naznačiti o kojem *modelu* se radi kod korištenja tih operatora
 * jedna opcija je na globalnoj razini koristiti neku naredbu kao npr. 
 ```
-use_model <ime_modela>;
-// nakon ove linije se sve naredbe koje zahtjevaju <ime_modela> odnose na taj model
+use <ime_modela>;
 ```
-* analogno za okvire
-```
-use_frame <ime_okvira>;
-// sve dalje se odnosi na taj okvir
-``` 
-
+* memorija['using'] = <ime_modela>
 ## definiranje valuacija, relacija, okvira, modela
 * sve se obavlja uz pomoć učitavanja iz datoteke
 * proširujemo 
+
+## Organizacija tipova podataka u memoriji
+* svijet (klasa): skup sljedbenika (ime skupa: sljedbenici) , skup propozicionalnih varijabli (ime skupa: činjenice); test (self, formula)
+* model (klasa): skup svjetova (ime skupa: nosač)
 
 # Sadržaj
 
@@ -104,6 +102,9 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 * značenje: P10 =| w1 gdje je P10 prop. varijabla koja prije toga "nije bila" u domeni valuacije  
 * dualni simbol: `~|` gdje npr. P10 ~| w1 
 
+### Provjera istinitosti
+* simbol: `?`
+* pozivanje: formula ? @svijet
 
 ### Negacija
 * simbol : `~`
@@ -117,6 +118,9 @@ definicija funkcija i funkcijski pozivi. Primjer funkcija: ...
 
 ### Diamond 
 * simbol : `<>`
+
+### Assigment
+* simbol : `=`
 
 ### Forsira i valuacija
 * za definiranje istinitosti neke prop. varijable na svijetu: vidi *Proširivanje valuacije*
@@ -135,6 +139,7 @@ Unos iz datoteke i ispis u datoteku.
 * detalji u direktoriju *primjeri*
 ### Učitavanje dokaza
 * pogledati Provjera dokaza
+### Zapisivanje i učitavanje modela
 
 ## 8. Komentari
 Jednolinijski.
