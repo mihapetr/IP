@@ -1,8 +1,6 @@
 # IP
 Projekt iz interpretacije programa (solver/proof-checker za modalnu logiku)
 
-## Tipovi podataka
-
 ## Osnovno: istinitost formule na modelu
 * nužno: unutar jezika implementirati mogućnost provjere istinitosti formule na određenom modelu i svijetu unutar njega
 
