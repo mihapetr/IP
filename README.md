@@ -80,56 +80,70 @@ Alternativno:
 
 ## 8. Komentari
 * jednolinijski
+
+## 9. Dodatno (1)
+* provjere istinitosti formule na određenom modelu i svijetu unutar njega (tzv. istinitost na točkovnom modelu) 
+* simbol: **??**
+* način korištenja: **???**
+
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Uredi ovo ispod
+U nastavku izlažemo nekoliko naprednih mogućnosti (ispitivanje svojstava gradivnih cjelina Modalne logike - istinitost i valjanost formule, proof-checker, karakteristike relacije dostiživosti) softvera dobivenih uz pomoć gore opisanih funkcionalnosti. 
 
-## Osnovno: istinitost formule na modelu
-* nužno: unutar jezika implementirati mogućnost provjere istinitosti formule na određenom modelu i svijetu unutar njega
+### 1. Istinitost formule na (konačnom) modelu
+* **algoritam**: koristiti mogućnost provjere istinitosti na točkovnom modelu za svaki svijet unutar konkretnog modela za kojeg se ispituje istinitost formule
 
-## Valjanost formule na konačnim modelima
-* iterativno?
-* istražiti glavni test za konačne modele
+### 2. Valjanost formule na (konačnim) modelima
+* **algoritam**: iterativno ili glavni test (istražiti)
 
-## Svojstva relacije
-* nužno: valjanost formule na konačnim modelima
+### 3. Karakteristike relacije dostiživosti
+* *specifična formula* : modalna formula čija valjanost na okviru ovisi o karakteristikama relacije dostiživosti
+* **algoritam**: ispitivanje valjanosti *specifične formule* 
 
-## Provjera dokaza
-* provjera sheme aksioma za formulu
-	* u AST-ovima usporedba stabala
-
-* modus ponens
+### 4. Proof-checker
+* provjera sheme aksioma za formulu: usporedba AST-ova koji predstavljaju formule
+* modus ponens:
 	* provjera svih mogućih parova iznad dotične formule zadovoljavaju li m.p.
 		* prolazak kroz sve formule i provjera je li kondicional i je li desno dijete izvedena formula
 	* **na najnižoj razini su samo KONDICIONAL i NEGACIJA**	
-	* optimizator pretvara svaku formulu u ekvivalentnu s gornjim veznicima
-* redosljed provjere (algoritam) :
+	* uzima se u obzir da optimizator pretvara svaku formulu u ekvivalentnu s gornjim veznicima
+* **algoritam**: ispravnost dokaza provjeravamo donjim redoslijedom
 	1. A1 : A -> (B -> A)
 	2. A3: (~B -> ~A) -> (A -> B)
 	3. K: [](A -> B) -> ([]A -> []B)
-	4. A2: ...
+	4. A2: (A -> (B -> C)) -> ((A -> B) -> (A -> C))
 	5. Nužnost
 	6. Modus ponens 
-* potrebne funkcije za ostvarenje gornjeg algoritma: usporedi(AST f1, AST f2) {usporedi jesu li dvije formule jednake}, razdvoji(AST f) {korijen stabla}
 
+## NAPOMENE
+* Istinitost i valjanost se provode nad konačnim modelima, ali to svejedno ne dovodi do gubljenja općenitosti u pogledu definiranja modela jer Modalna logika ima *finite model property*, odnosno svojstvo konačnosti modela
+* Ovdje još objasniti zašto možemo u dokazima koristiti samo sheme aksioma RS umjesto tautologija u modalnom jeziku
+	
+	
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Ovaj dio će nakon završetka projekta bit obrisan (eventualno možemo ostaviti dijelove u kojima objašnjavamo kako je što ostvareno u memoriji te objašnjenje kako korištenje modela funkcionira)
 # Organizacija
-
 * *main.py* je glavni source code u kojem će biti aplikacija
 * svatko ima svoj modul na kojem radi
 
-## Korištenje modela
+## 1.) Korištenje modela
 ```
 koristi <ime_modela>;
 ```
 * memorija['using'] = <ime_modela>
-## definiranje valuacija, relacija, okvira, modela
+## 2.) Definiranje valuacija, relacija, okvira, modela
 * sve se obavlja uz pomoć učitavanja iz datoteke
 * proširujemo dolje definiranim operatorima 
 
-## Organizacija tipova podataka u memoriji
+## 3.) Organizacija tipova podataka u memoriji
 * svijet (klasa): skup sljedbenika (ime skupa: sljedbenici) , skup propozicionalnih varijabli (ime skupa: činjenice); test (self, formula)
 * model (klasa): skup svjetova (ime skupa: nosač)
 
 ### Ostatak
 * optimizator: pretvara korisnikove formule u njima ekvivalentne koje koriste operatore `[], ->, ~`
+
+### Prijedlozi
+* u ovoj listi svatko navodi svoje prijedloge
 
 
