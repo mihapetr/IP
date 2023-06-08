@@ -146,4 +146,7 @@ koristi <ime_modela>;
 ### Prijedlozi
 * mogli bismo napraviti "operator" castanja tipa propozicionalna varijabla u tip formula (slično je napravljeno u onom primjeru BASIC.py gdje Čačić objašnjava)
 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+## roberto.py
+* modalne formule, lijepo ispisivanje, optimizator *optim1* koji formulu pretvara u njoj ekvivalentnu koja sadrži samo kondicional i negaciju. Također, implementiran je i optimizator *optim* koji briše redundantne negacije (bilo bi dobro testirati radi li sve ispravno)
 
