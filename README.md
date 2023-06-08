@@ -140,10 +140,10 @@ koristi <ime_modela>;
 * svijet (klasa): skup sljedbenika (ime skupa: sljedbenici) , skup propozicionalnih varijabli (ime skupa: činjenice); test (self, formula)
 * model (klasa): skup svjetova (ime skupa: nosač)
 
-### Ostatak
+### Ostatak (ovdje idu usvojeni prijedlozi)
 * optimizator: pretvara korisnikove formule u njima ekvivalentne koje koriste operatore `[], ->, ~`
 
 ### Prijedlozi
-* u ovoj listi svatko navodi svoje prijedloge
+* mogli bismo napraviti "operator" castanja tipa propozicionalna varijabla u tip formula (slično je napravljeno u onom primjeru BASIC.py gdje Čačić objašnjava)
 
 
