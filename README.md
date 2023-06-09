@@ -152,3 +152,8 @@ koristi <ime_modela>;
 * funkcija jednaki(f1, f2) koja prima dva AST-a (formule) i uspoređuje ih. Vraća True ako su jednaki, a False ako nisu (9.6.2023.)
 * funkcionalnost: for petlja, if + else naredba, deklaracije varijabli (trenutni tip = int), praćenje je li varijabla deklarirana, javljanje greške ako se varijabla redeklarira ili joj se pridružuje varijabla koja nije do tad deklarirana ili pridružujemo vrijednost varijabli koju do tad nismo deklarirali (osim u for-u), continue, break, aritmetički izrazi (operacije: +, * i ^), ispisivanje varijabli (ispiši<<varijabla|aritmetički izraz), pridruživanje aritmetičkog izraza već deklariranoj aritmetičkoj varijabli; todo: while petlja, optimizator aritmetičkih izraza, više logičkih uvjeta u if-u (zasad podržan samo jedan), proširiti operatore unutar if i for s operatorom != (9.6.2023.)
 
+## kosijenac.py
+* svjetovi, relacija doztizivosti i valuacija (jos nije implementirano ucitavanje modela iz datoteke)
+* AST `Test` koji nastaje iz naredbe oblika `formula ? @svijet` i testira istinitost formule na svijetu (jos nije isprobano jer treba ucitavanje modela iz datoteke za uopce definirati svjetove)
+* Implementirani simboli `|=`, `=|`, `|~` i `~|` kao AST-ovi `Forsira`, `Vrijedi`, `Neforsira` i `Nevrijedi`, redom.
+* TODO: uskladiti s robertovom verzijom, uvesti ucitavanje iz datoteke, testirati `Test` klasu
