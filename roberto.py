@@ -79,7 +79,7 @@ class Unarna(AST):
             nova_klasa = Negacija(ispod_opt)
             nova_klasa = Box(nova_klasa)
             return Negacija(nova_klasa)
-        return self
+        else: return self
 
     def ispis(self): 
         return self.veznik + self.ispod.ispis()
@@ -119,6 +119,7 @@ class Binarna(AST):
             desna_klasa = Negacija(desna_klasa)
             nova_klasa = Kondicional(lijeva_klasa, desna_klasa)
             return Negacija(nova_klasa)
+        else: return self
 
     def ispis(self): return '(' + self.lijevo.ispis() + self.veznik + self.desno.ispis() + ')'
 
