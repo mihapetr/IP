@@ -68,9 +68,7 @@ class Unarna(AST):
 
     def optim(self):
         klasa = type(self)
-        print(klasa)
         ispod_opt = self.ispod.optim()
-        print('a',ispod_opt)
         if ispod_opt ^ Negacija and self ^ Negacija: return ispod_opt.ispod
         else: return klasa(ispod_opt) 
     
