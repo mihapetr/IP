@@ -150,5 +150,5 @@ koristi <ime_modela>;
 ## roberto.py
 * modalne formule, lijepo ispisivanje, optimizator *optim1* koji formulu pretvara u njoj ekvivalentnu koja sadrži samo kondicional i negaciju. Također, implementiran je i optimizator *optim* koji briše redundantne negacije (bilo bi dobro testirati radi li sve ispravno) (8.6.2023.)
 * funkcija jednaki(f1, f2) koja prima dva AST-a (formule) i uspoređuje ih. Vraća True ako su jednaki, a False ako nisu (9.6.2023.)
-* zasad roberto.py ima veću funkcionalnost nego 07_CPP_fragment.py, ali ne treba ga još gledati jer moram urediti neke stvari i dovršiti što sam naumio za danas. Npr. nisam još implementirao da s desne strane jednakosti može doći izraz, a ne samo broj ili varijabla, tj. aritmetika na brojevima još nije implementirana. Još nisam implementirao pridruživanje kao naredbu (ne mislim na pridruživanje u for-u) te deklaraciju varijabli
+* zasad ima veću funkcionalnost nego 07_CPP_fragment.py, ali ne treba ga još gledati jer moram urediti neke stvari i dovršiti što sam naumio za danas. Npr. nisam još implementirao da s desne strane jednakosti može doći izraz, a ne samo broj ili varijabla, tj. aritmetika na brojevima još nije implementirana. Još nisam implementirao pridruživanje kao naredbu (ne mislim na pridruživanje u for-u) te deklaraciju varijabli. Dakle, još nismo ni krenuli, a imamo preko 300 linija koda
 
