@@ -1,7 +1,8 @@
 from vepar import *
 
 subskript = str.maketrans('0123456789', '₀₁₂₃₄₅₆₇₈₉')
-class Prekid(NelokalnaKontrolaToka): """Signal koji šalje naredba break."""
+class PrekidBreak(NelokalnaKontrolaToka): """Signal koji šalje naredba break."""
+class PrekidContinue(NelokalnaKontrolaToka): """Signal koji šalje naredba continue"""
 
 class T(TipoviTokena):
     NEG, KONJ, DISJ, O_OTV, O_ZATV = '~&|()'
@@ -16,12 +17,15 @@ class T(TipoviTokena):
     TOČKAZ, V_OTV, V_ZATV = ';{}'
     FOR, IF, ELSE, WHILE, ISPIŠI = 'for', 'if', 'else', 'while', 'ispiši'
     INT = 'int'
-    JEDNAKO, JJEDNAKO, PLUS, PLUSP, PLUSJ, MINUS, MINUSM, MINUSJ, PUTA = '=', '==', '+', '++', '+=', '-', '--', '-=', '*'
+    JEDNAKO, JJEDNAKO, PLUS, PLUSP, PLUSJ, MINUS, MINUSM, MINUSJ, PUTA, NA = '=', '==', '+', '++', '+=', '-', '--', '-=', '*', '^'
     MANJE, MMANJE, VEĆE = '<', '<<', '>' 
 
+    class CONTINUE(Token):
+        literal = 'continue'
+        def izvrši(self): raise PrekidContinue
     class BREAK(Token):
         literal = 'break'
-        def izvrši(self): raise Prekid
+        def izvrši(self): raise PrekidBreak
     class BROJ(Token): 
         def vrijednost(self): return int(self.sadržaj)
     class IME(Token): 
@@ -69,19 +73,25 @@ def ml(lex):
 ### beskontekstna gramatika
 # start -> naredbe naredba
 # naredbe -> '' | naredbe naredba
-# naredba  -> petlja | grananje | ispis TOČKAZ | pridruživanje TOČKAZ | BREAK TOČKAZ
-# for_operator -> MANJE | VEĆE ##ovdje nadodati ako zelimo jos nesto u for_operatoru (možda još !=)
+# naredba  -> petlja | grananje | ispis TOČKAZ | pridruživanje TOČKAZ | deklaracija TOČKAZ | BREAK TOČKAZ | CONTINUE TOČKAZ
+# for_operator -> MANJE | VEĆE ##NAPOMENA: ovdje nadodati ako zelimo jos nesto u for_operatoru (možda još !=)
 # promjena -> PLUSP | MINUSM | PLUSJ BROJ | MINUSJ BROJ
 # for -> FOR O_OTV IME# JEDNAKO BROJ TOČKAZ IME# for_operator BROJ TOČKAZ IME# promjena O_ZATV
-# petlja -> for naredba | for V_OTV naredbe V_ZATV
-# nešto -> IME | BROJ
-# if_operator -> JJEDNAKO | MANJE | VEĆE  #ovdje nadodati ako zelimo jos nesto u if_operatoru (možda još !=)
-# uvjet -> nešto | nešto if_operator nešto 
-# grananje -> IF O_OTV uvjet O_ZATV naredba | IF O_OTV uvjet O_ZATV naredba ELSE naredba
-# varijable -> '' | varijable MMANJE nešto
+# blok -> V_OTV naredbe V_ZATV | naredba
+# petlja -> for blok
+# varijabla -> IME | BROJ
+# if_operator -> JJEDNAKO | MANJE | VEĆE  ##NAPOMENA: ovdje nadodati ako zelimo jos nesto u if_operatoru (možda još !=)
+# uvjet -> varijabla | varijabla if_operator varijabla 
+# grananje -> IF O_OTV uvjet O_ZATV blok (ELSE blok)?
+# varijable -> '' | varijable MMANJE varijabla
 # ispis -> ISPIŠI varijable 
-# tip -> INT (ovo je odvojeno iako je pravilo trivijalno jer će biti još tipova s desne strane)
-# pridruživanje -> (tip IME JEDNAKO nešto |) IME JEDNAKO nešto
+# izraz -> član | izraz (PLUS|MINUS) član
+# član -> faktor | član PUTA faktor
+# faktor -> baza | baza NA faktor | MINUS faktor
+# baza -> BROJ | IME(aritmetičkog tipa) | O_OTV izraz O_ZATV 
+# tip -> INT (ovo je odvojeno iako je pravilo trivijalno jer će biti još tipova s desne strane; vjerojatno ću još od aritmetičkih dodati nat i to će biti dovoljno)
+# pridruživanje -> IME JEDNAKO izraz
+# deklaracija -> tip IME JEDNAKO izraz 
 
 ## ovo ispod kasnije će se povezati s gornjim kad se uvedu varijable formula, model itd.
 # formula -> PVAR | NEG formula | DIAMOND formula | BOX formula | O_OTV formula binvez formula O_ZATV
@@ -97,9 +107,15 @@ class P(Parser):
         if p > T.FOR: return p.petlja()
         elif p > T.ISPIŠI: return p.ispis()
         elif p > T.IF: return p.grananje()
-        elif br := p >> T.BREAK:
+        elif p > T.IME: return p.pridruživanje()
+        elif p > T.INT: return p.deklaracija() #kad budemo imali vise tipova, onda cemo imati p > {T.INT, T.FORMULA...}
+        elif br := p >= T.BREAK:
             p >> T.TOČKAZ
             return br
+        elif cont := p >= T.CONTINUE:
+            p >> T.TOČKAZ
+            return cont
+        else: raise SintaksnaGreška('Nepoznata naredba')
     
     def petlja(p):
         kriva_varijabla = SemantičkaGreška('Sva tri dijela for-petlje moraju imati istu varijablu')
@@ -107,7 +123,7 @@ class P(Parser):
         p >> T.FOR, p >> T.O_OTV
         i = p >> T.IME
         p >> T.JEDNAKO
-        početak = p >> T.BROJ
+        početak = p >> {T.BROJ, T.IME}
         p >> T.TOČKAZ
 
         if (p >> T.IME) != i: raise kriva_varijabla
@@ -120,34 +136,79 @@ class P(Parser):
         elif minus_ili_plus := p >> {T.PLUSJ, T.MINUSJ}: promjena = p >> T.BROJ
         p >> T.O_ZATV
 
-        if p >= T.V_OTV:
-            blok = []
-            while not p >= T.V_ZATV: blok.append(p.naredba())
-        else: blok = [p.naredba()]
+        blok = p.blok()
         return Petlja(i, početak, for_operator, granica, promjena, minus_ili_plus, blok)
+    
+    #blok može biti ili jedna naredba ili {naredbe*} !!!
+    def blok(p):
+        naredbe = []
+        if p >= T.V_OTV:
+            while not p >= T.V_ZATV:
+                naredbe.append(p.naredba())
+        else: naredbe.append(p.naredba())
+
+        return Blok(naredbe)
     
     def ispis(p):
         p >> T.ISPIŠI
         varijable = []
-        while p >= T.MMANJE: varijable.append(p >> T.IME)
+        while p >= T.MMANJE: varijable.append(p >> {T.IME, T.BROJ})
         p >> T.TOČKAZ
         return Ispis(varijable)
     
-    #iznad je sve ok, samo u naredba treba implementirat p.pridruživanje()
     def grananje(p):
         p >> T.IF, p >> T.O_OTV
         uvjet = p.uvjet()
         p >> T.O_ZATV
-        if_naredba = p.naredba()
-        else_naredba = nenavedeno
-        if p >= T.ELSE: else_naredba = p.naredba()
-        return Grananje(uvjet, if_naredba, else_naredba)
+        if_blok = p.blok()
+        else_blok = nenavedeno
+        if p >= T.ELSE: else_blok = p.blok()
+        return Grananje(uvjet, if_blok, else_blok)
     
     def uvjet(p):
         lijeva_strana = p >> {T.IME, T.BROJ}
         op = p >> {T.JJEDNAKO, T.MANJE, T.VEĆE} #ovdje se dodaju if_operatori ako zelimo prosiriti
         desna_strana = p >> {T.IME, T.BROJ}
         return Uvjet(lijeva_strana, op, desna_strana)
+    
+    def pridruživanje(p):
+        ime_varijable = p >> T.IME
+        p >> T.JEDNAKO
+        vrijednost = p.izraz()
+        p >> T.TOČKAZ
+        return Pridruživanje(ime_varijable, vrijednost)
+    
+    def deklaracija(p):
+        tip = p >> T.INT #kad budemo imali vise tipova, onda cemo imati p > {T.INT, T.FORMULA...}
+        ime = p >> T.IME
+        p >> T.JEDNAKO
+        vrijednost = p.izraz()
+        p >> T.TOČKAZ
+        return Deklaracija(tip, ime, vrijednost)
+
+    def izraz(p):
+        t = p.član()
+        while op := p >= {T.PLUS, T.MINUS}: t = Op(op, t, p.član())
+        return t
+    
+    def član(p):
+        t = p.faktor()
+        while op := p >= T.PUTA: t = Op(op, t, p.faktor())
+        return t
+    
+    def faktor(p):
+        if op := p >= T.MINUS: return Op(op, nenavedeno, p.faktor())
+        baza = p.baza()
+        if p >= T.NA: return Potencija(baza, p.faktor())
+        else: return baza
+
+    def baza(p):
+        if elementarni := p >= {T.BROJ, T.IME}: 
+            return elementarni #valjda tu nece bit problema kod T.IME jer to ce kasnije bit naziv za neku varijablu koja ne mora biti aritmetickog tipa
+        elif p >> T.O_OTV:
+            u_zagradi = p.izraz()
+            p >> T.O_ZATV
+            return u_zagradi
 
     def formula(p):
         if varijabla := p >= T.PVAR: return varijabla
@@ -179,11 +240,12 @@ class Program(AST):
         rt.mem = Memorija()
         try:
             for naredba in program.naredbe: naredba.izvrši()
-        except Prekid: raise SemantičkaGreška('nedozvoljen break izvan petlje')
+        except PrekidBreak: raise SemantičkaGreška('Nedozvoljen break izvan petlje')
+        except PrekidContinue: raise SemantičkaGreška('Nedozvoljen continue izvan petlje')
 
 class Petlja(AST):
     varijabla: 'IME'
-    početak: 'BROJ'
+    početak: 'BROJ | varijabla'
     operator: '(<|>)' #mogli bi bit još podržani <= ili >=, ali nije da time dobivamo na ekspresivnosti jezika; eventualno dodati !=
     granica: 'BROJ'
     promjena: 'BROJ?'
@@ -195,12 +257,25 @@ class Petlja(AST):
         rt.mem[kv] = petlja.početak.vrijednost()
         while rt.mem[kv] < petlja.granica.vrijednost() if petlja.operator ^ T.MANJE else rt.mem[kv] > petlja.granica.vrijednost():
             try:
-                for naredba in petlja.blok: naredba.izvrši()
-            except Prekid: break
+                petlja.blok.izvrši()
+            except PrekidBreak: break
+            except PrekidContinue: #nazalost dupliciram kod radi ispravnog rada continue, kasnije mozemo popraviti
+                prom = petlja.promjena
+                if petlja.predznak ^ T.MINUSJ or petlja.predznak ^ T.MINUSM:
+                    rt.mem[kv] -= prom.vrijednost() if prom else 1
+                else: rt.mem[kv] += prom.vrijednost() if prom else 1
+                continue
             prom = petlja.promjena
             if petlja.predznak ^ T.MINUSJ or petlja.predznak ^ T.MINUSM:
                 rt.mem[kv] -= prom.vrijednost() if prom else 1
             else: rt.mem[kv] += prom.vrijednost() if prom else 1
+
+class Blok(AST):
+    naredbe: 'naredba*'
+    
+    def izvrši(blok):
+        for naredba in blok.naredbe:
+            naredba.izvrši()
 
 class Ispis(AST):
     varijable: 'IME*'
@@ -221,7 +296,7 @@ class Uvjet(AST):
             return uvjet.lijeva.vrijednost() > uvjet.desna.vrijednost()
         elif uvjet.operator ^ T.MANJE:
             return uvjet.lijeva.vrijednost() < uvjet.desna.vrijednost()
-        else: print('Trebao bih raisati neku vrstu greške da operator nije podržan ali to ne znam')
+        else: raise SintaksnaGreška('Nepodržan operator u if-uvjetu')
 
 class Grananje(AST):
     uvjet: 'log'
@@ -231,6 +306,45 @@ class Grananje(AST):
     def izvrši(grananje):
         if grananje.uvjet.ispunjen(): grananje.onda.izvrši()
         elif grananje.inače: grananje.inače.izvrši()
+
+class Pridruživanje(AST):
+    varijabla: 'IME'
+    vrij: '(varijabla | BROJ)'
+
+    def izvrši(pridruživanje):
+        if pridruživanje.varijabla in rt.mem:
+            rt.mem[pridruživanje.varijabla] = pridruživanje.vrij.vrijednost()
+        else: return rt.mem[pridruživanje.varijabla] #jer ovo vraca bas ono upozorenje koje nam treba
+
+class Deklaracija(AST):
+    tip: 'neki od podrzanih tipova'
+    ime: 'IME'
+    vrij: 'varijabla | BROJ'
+
+    def izvrši(deklaracija):
+        if deklaracija.ime in rt.mem:
+            raise deklaracija.ime.redeklaracija()
+        else: rt.mem[deklaracija.ime] = deklaracija.vrij.vrijednost()
+
+class Op(AST):
+    op: 'T'
+    lijevo: 'izraz?'
+    desno: 'izraz'
+
+    def vrijednost(self):
+        if self.lijevo is nenavedeno: l = 0  
+        else: l = self.lijevo.vrijednost()
+        o, d = self.op, self.desno.vrijednost()
+        if o ^ T.PLUS: return l + d
+        elif o ^ T.MINUS: return l - d
+        elif o ^ T.PUTA: return l * d
+
+class Potencija(AST):
+    baza: 'elementarni | izraz'
+    eksponent: 'faktor'
+
+    def vrijednost(self):
+        return self.baza.vrijednost() ** self.eksponent.vrijednost()
 
 class Unarna(AST):
     ispod: 'formula'
@@ -308,7 +422,7 @@ def optimiziraj(formula):
     """Pretvara formulu (AST) u formulu koja od veznika ima samo kondicional i negaciju; prije te pretvorbe su još uklonjene dvostruke negacije"""
 
     nova = formula.optim() #prije optimizacije da dobijemo samo negaciju i kondicional uklanjamo redundantne negacije
-    nova = nova.optim1() #kreiramo ekvivalentnu formulu koja ima samo negaciju i kondicional od veznika
+    nova = nova.optim1() #kreiramo ekvivalentnu formulu koja ima samo negaciju, kondicional i box od veznika
     return nova.optim() #nakon dobivanja ekvivalentne formule opet se mogu javiti redundantne negacije pa ih zato još jednom mičemo
 
 def jednaki(f1, f2):
@@ -325,12 +439,22 @@ def jednaki(f1, f2):
 ### ispod je samo testiranje
 
 prikaz(kôd := P('''
-    for ( i = 8 ; i < 13 ; i += 2 ) {
-        for(j=0; j<5; j++) {
-            ispiši<<i<<j;
-            if(i == 10) if (j == 1) break;
+    # ovo je komentar
+    int a = 3 + 5;
+    int b = 0;
+    b = 3;
+    for ( i = a ; i < 13 ; i++ ) {
+        if (i == 10) {
+            ispiši << a;
+            continue;
+        } else {
+            ispiši << i;
         }
-        ispiši<<i;
     }
 '''), 8)
 kôd.izvrši()
+
+# optimizator za aritmeticke izraze
+# while petlja -> vjerojatno onda AST Petlja preimenovat u FOR i onda zaseban AST za while
+# omogucit vise logickih uvjeta u if-u
+# uvest novi cjelobrojni tip nat i omogucit eksplicitno/implicitno castanje
