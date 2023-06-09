@@ -148,5 +148,6 @@ koristi <ime_modela>;
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## roberto.py
-* modalne formule, lijepo ispisivanje, optimizator *optim1* koji formulu pretvara u njoj ekvivalentnu koja sadrži samo kondicional i negaciju. Također, implementiran je i optimizator *optim* koji briše redundantne negacije (bilo bi dobro testirati radi li sve ispravno)
+* modalne formule, lijepo ispisivanje, optimizator *optim1* koji formulu pretvara u njoj ekvivalentnu koja sadrži samo kondicional i negaciju. Također, implementiran je i optimizator *optim* koji briše redundantne negacije (bilo bi dobro testirati radi li sve ispravno) (8.6.2023.)
+* funkcija jednaki(f1, f2) koja prima dva AST-a (formule) i uspoređuje ih. Vraća True ako su jednaki, a False ako nisu
 
