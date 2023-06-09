@@ -28,10 +28,8 @@ class T(TipoviTokena):
         def izvrši(self): raise PrekidBreak
     class BROJ(Token): 
         def vrijednost(self): return int(self.sadržaj)
-        def izvrši(self): return self.vrijednost()
     class IME(Token): 
         def vrijednost(self): return rt.mem[self]
-        def izvrši(self): return self.vrijednost()
 
 @lexer
 def ml(lex):
