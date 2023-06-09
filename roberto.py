@@ -7,7 +7,9 @@ class T(TipoviTokena):
     KOND, BIKOND = '->', '<->'
     BOX, DIAMOND = '[]', '<>'
     #inertni tokeni iznad su dovoljni za formule, ovi ispod su već za jezik
-    TOČKAZ = ';'
+    TOČKAZ, V_OTV, V_ZATV = ';{}'
+    FOR, IF, ELSE, WHILE = 'for', 'if', 'else', 'while'
+    INT = 'int'
     class PVAR(Token):
         def optim(self): return self
         def ispis(self): return self.sadržaj.translate(subskript)
@@ -141,9 +143,29 @@ def optimiziraj(formula):
     nova = formula.optim() #prije optimizacije da dobijemo samo negaciju i kondicional uklanjamo redundantne negacije
     nova = nova.optim1() #kreiramo ekvivalentnu formulu koja ima samo negaciju i kondicional od veznika
     return nova.optim() #nakon dobivanja ekvivalentne formule opet se mogu javiti redundantne negacije pa ih zato još jednom mičemo
+
+def jednaki(f1, f2):
+    klasa1 = type(f1)
+    klasa2 = type(f2)
+
+    if klasa1 != klasa2:
+        return False
+    elif f1 ^ T.PVAR:
+        return f1.ispis() == f2.ispis()
+    elif isinstance(f1, Binarna): return jednaki(f1.lijevo, f2.lijevo) and jednaki(f1.desno, f2.desno)
+    else: return jednaki(f1.ispod, f2.ispod)
+    
+### ispod je samo testiranje
     
 ulaz = '(<>~~P0&([]P1<-><>P5))'
-prikaz(F := P(ulaz))
-print(F.ispis())
-prikaz(F := optimiziraj(F))
-print(F.ispis())
+#prikaz(F := P(ulaz))
+#print(F.ispis())
+#prikaz(F := optimiziraj(F))
+#print(F.ispis())
+F = P('~<>P0')
+ulaz1 = '~<>P0'
+F1 = P(ulaz1)
+print(jednaki(F, F1))
+
+
+
