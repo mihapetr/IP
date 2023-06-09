@@ -457,3 +457,4 @@ kôd.izvrši()
 # optimizator za aritmeticke izraze
 # while petlja -> vjerojatno onda AST Petlja preimenovat u FOR i onda zaseban AST za while
 # omogucit vise logickih uvjeta u if-u
+# uvest novi cjelobrojni tip nat i omogucit eksplicitno/implicitno castanje
