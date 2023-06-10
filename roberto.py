@@ -16,7 +16,7 @@ class T(TipoviTokena):
     #gornji tokeni su za formule, a donji za program
     TOČKAZ, V_OTV, V_ZATV = ';{}'
     FOR, IF, ELSE, WHILE, ISPIŠI = 'for', 'if', 'else', 'while', 'ispiši'
-    INT = 'int'
+    INT, NAT, FORMULA = 'int', 'nat', 'formula'
     JEDNAKO, JJEDNAKO, PLUS, PLUSP, PLUSJ, MINUS, MINUSM, MINUSJ, PUTA, NA = '=', '==', '+', '++', '+=', '-', '--', '-=', '*', '^'
     MANJE, MMANJE, VEĆE = '<', '<<', '>' 
 
@@ -30,6 +30,16 @@ class T(TipoviTokena):
         def vrijednost(self): return int(self.sadržaj)
     class IME(Token): 
         def vrijednost(self): return rt.mem[self]
+
+# donje dvije klase sluze samo za lijepo ispisivanje poruke prilikom nekompatibilnih tipova
+# napravio sam to tako da se lako moze prosirivati kada nove tipove budemo ubacivali
+class Tip(enum.Enum):
+    N = 'NAT'
+    Z = 'INT'
+
+class GreskaTipova:
+    def krivi_tip(self, ime, tip1, tip2):
+        raise SemantičkaGreška(f"IME '{ime}': tipovi ne odgovaraju: {tip1.name} vs. {tip2.name}")
 
 @lexer
 def ml(lex):
@@ -89,7 +99,7 @@ def ml(lex):
 # član -> faktor | član PUTA faktor
 # faktor -> baza | baza NA faktor | MINUS faktor
 # baza -> BROJ | IME(aritmetičkog tipa) | O_OTV izraz O_ZATV 
-# tip -> INT (ovo je odvojeno iako je pravilo trivijalno jer će biti još tipova s desne strane; vjerojatno ću još od aritmetičkih dodati nat i to će biti dovoljno)
+# tip -> INT | NAT (ovo je odvojeno iako je pravilo trivijalno jer će biti još tipova s desne strane; vjerojatno ću još od aritmetičkih dodati nat i to će biti dovoljno)
 # pridruživanje -> IME JEDNAKO izraz
 # deklaracija -> tip IME JEDNAKO izraz 
 
@@ -108,7 +118,7 @@ class P(Parser):
         elif p > T.ISPIŠI: return p.ispis()
         elif p > T.IF: return p.grananje()
         elif p > T.IME: return p.pridruživanje()
-        elif p > T.INT: return p.deklaracija() #kad budemo imali vise tipova, onda cemo imati p > {T.INT, T.FORMULA...}
+        elif p > {T.INT, T.NAT}: return p.deklaracija() #kad budemo imali vise tipova, onda cemo imati p > {T.INT, T.FORMULA...}
         elif br := p >= T.BREAK:
             p >> T.TOČKAZ
             return br
@@ -179,12 +189,12 @@ class P(Parser):
         return Pridruživanje(ime_varijable, vrijednost)
     
     def deklaracija(p):
-        tip = p >> T.INT #kad budemo imali vise tipova, onda cemo imati p > {T.INT, T.FORMULA...}
+        tip = p >> {T.INT, T.NAT} #kad budemo imali vise tipova, onda cemo imati p > {T.INT, T.FORMULA...}
         ime = p >> T.IME
         p >> T.JEDNAKO
-        vrijednost = p.izraz()
+        vrij = p.izraz()
         p >> T.TOČKAZ
-        return Deklaracija(tip, ime, vrijednost)
+        return Deklaracija(tip, ime, vrij)
 
     def izraz(p):
         t = p.član()
@@ -321,7 +331,13 @@ class Deklaracija(AST):
     ime: 'IME'
     vrij: 'varijabla | BROJ'
 
-    def izvrši(deklaracija):
+    def izvrši(deklaracija):                                              
+        if deklaracija.tip ^ T.NAT and deklaracija.vrij.vrijednost() < 0: #na ovaj nacin bi sva ostala nepodudaranja u tipovima mogli rjesavati; uoči da se ovo mora rješavat u AST-u, a ne u odgovarajućoj metodi parsera
+            tip1 = Tip.N
+            tip2 = Tip.Z
+            greska = GreskaTipova()
+            greska.krivi_tip(deklaracija.ime.sadržaj, tip1, tip2)
+
         if deklaracija.ime in rt.mem:
             raise deklaracija.ime.redeklaracija()
         else: rt.mem[deklaracija.ime] = deklaracija.vrij.vrijednost()
@@ -366,6 +382,10 @@ class Unarna(AST):
 
     def ispis(self): 
         return self.veznik + self.ispod.ispis()
+    
+    #provjeri ovo
+    def izvrši(self):
+        return self.ispis()
 
 class Negacija(Unarna):
     veznik = '¬'
@@ -406,6 +426,10 @@ class Binarna(AST):
 
     def ispis(self): return '(' + self.lijevo.ispis() + self.veznik + self.desno.ispis() + ')'
 
+    #provjeri ovo
+    def izvrši(self):
+        return self.ispis()
+
 class Disjunkcija(Binarna):
     veznik = '∨'
 
@@ -435,15 +459,31 @@ def jednaki(f1, f2):
         return f1.ispis() == f2.ispis()
     elif isinstance(f1, Binarna): return jednaki(f1.lijevo, f2.lijevo) and jednaki(f1.desno, f2.desno)
     else: return jednaki(f1.ispod, f2.ispod)
+
+# provjerava je li formula f shema aksioma A1
+# NISAM TESTIRAO jer još nemamo implementiranu varijablu tipa formula
+def shemaA1(f):
+    optimiziraj(f)
+    f.ispis()
+    print()
+    if not f ^ Kondicional:
+        return False
+    lijeva_formula = f.lijevo
+    desna_formula = f.desno
+    if not desna_formula ^ Kondicional:
+        return False
+    return lijeva_formula.ispis() == desna_formula.desna.ispis()
     
 ### ispod je samo testiranje
 
 prikaz(kôd := P('''
     # ovo je komentar
-    int a = 3 + 5;
-    int b = 0;
-    b = 3;
-    for ( i = a ; i < 13 ; i++ ) {
+    int a = 1;
+    int b = a + a + 3;
+    nat c = b;
+    c = -1; #ovdje je problem jer pri pridruzivanju nemamo kontrolu nad kompatibilnosti
+    
+    for ( i = c ; i < 13 ; i++ ) {
         if (i == 10) {
             ispiši << a;
             continue;
@@ -454,7 +494,20 @@ prikaz(kôd := P('''
 '''), 8)
 kôd.izvrši()
 
-# optimizator za aritmeticke izraze
-# while petlja -> vjerojatno onda AST Petlja preimenovat u FOR i onda zaseban AST za while
+## PRIJEDLOZI
+# optimizator za aritmeticke izraze (ovo je mozda nepotrebno, samo riskiramo neku pogresku, a nije da nam se program na njima bazira)
+# while petlja -> vjerojatno onda AST Petlja preimenovat u FOR i onda zaseban AST za while imena WHILE
 # omogucit vise logickih uvjeta u if-u
-# uvest novi cjelobrojni tip nat i omogucit eksplicitno/implicitno castanje
+# omogucit ispisivanje korisničkog stringa, npr. ispiši << "Sve je dobro prošlo!";
+
+## PROBLEMI
+# uveden je token 'formula', odnosno novi tip podatka. Deklaracija je ok, nece bit nikakvih problema, no
+# problem je pridruzivanje s pravilom pridruživanje -> IME JEDNAKO izraz. Nakon uvodjenja tipa formule, ono
+# se treba updateati u pridruživanje -> IME JEDNAKO (izraz | formula), ali hoćemo li u parseru pozvati
+# p.izraz() ili p.formula() ovisi o tome kakvog je tipa IME pa taj problem moramo riješiti (dakle moše se
+# dogoditi nešto poput: formula f = (P0->P1); int a = 3; f = -1; a = f;)
+
+## NAPRAVLJENO U ODNOSU NA ZADNJI PUT
+# dodana funkcija za proof-checker: shemaA1 (nju ce kao korisnik upisati pri svom radu, nece biti u jeziku, ali neka stoji)
+# dodan novi tip 'nat' (prirodni brojevi uključujući i 0)
+# dodana kontrola kompatibilnosti tipova za DEKLARACIJU
