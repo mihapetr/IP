@@ -82,6 +82,7 @@ Alternativno:
 
 ## 8. Komentari
 * jednolinijski
+* započinju specijalnim znakom `#`
 
 ## 9. Dodatno (1)
 * provjere istinitosti formule na određenom modelu i svijetu unutar njega (tzv. istinitost na točkovnom modelu) 
