@@ -132,7 +132,7 @@ Ovaj dio će nakon završetka projekta bit obrisan (eventualno možemo ostaviti 
 
 ## 1.) Korištenje modela
 ```
-koristi <ime_modela>;
+koristi <ime_modela> { @w1, @w2, ..., @wn };
 ```
 * memorija['using'] = <ime_modela>
 ## 2.) Definiranje valuacija, relacija, okvira, modela
