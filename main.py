@@ -1,4 +1,5 @@
 from vepar import *
+import csv
 
 subskript = str.maketrans('0123456789', '₀₁₂₃₄₅₆₇₈₉')
 class PrekidBreak(NelokalnaKontrolaToka): """Signal koji šalje naredba break."""
