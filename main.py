@@ -19,12 +19,12 @@ class T(TipoviTokena):
     # Tokeni za svijetove i modele
     FORSIRA, NEFORSIRA, VRIJEDI, NEVRIJEDI = '|=', '|~', '=|', '~|'
     class SVIJET(Token):
-        sljedbenici: set(T.SVIJET)
-        činjenice: set(T.PVAR)
+        sljedbenici: 'set(T.SVIJET)'
+        činjenice: 'set(T.PVAR)'
         def vrijednost(self): return self.sadržaj
     class MODEL(Token):
-        pvars: set(T.PVAR)
-        nosač: set(T.SVIJET)
+        pvars: 'set(T.PVAR)'
+        nosač: 'set(T.SVIJET)'
         def vrijednost(self): return self.sadržaj
         def nađi_svijet(self, naziv): 
             for svijet in self.nosač:
@@ -397,7 +397,7 @@ class Koristi(AST):
 
 class Unos(AST):
     model: T.MODEL
-    datoteke: list(T.IMED)
+    datoteke: 'list(T.IMED)'
     def izvrši(self):
         for dat in self.datoteke:
             with open(dat.vrijednost(), newline='') as csv_dat:
@@ -655,7 +655,7 @@ class Provjera(AST):
 
 class Forsira(AST):
     svijet: T.SVIJET
-    pvars: list(T.PVAR)
+    pvars: 'list(T.PVAR)'
     simbol: 'T.FORSIRA | T.NEFORSIRA'
     def izvrši(self):
         if self.svijet not in rt.mem['using'].nosač:
@@ -668,7 +668,7 @@ class Forsira(AST):
 
 class Vrijedi(AST):
     pvar: T.PVAR
-    svjetovi: list(T.SVIJET)
+    svjetovi: 'list(T.SVIJET)'
     simbol: 'T.VRIJEDI | T.NEVRIJEDI'
     def izvrši(self):
         for svijet in self.svjetovi:
