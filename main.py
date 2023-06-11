@@ -162,7 +162,7 @@ def ml(lex):
 # vrijedi -> PVAR VRIJEDI V_OTV lista_svijet V_ZATV | PVAR NEVRIJEDI V_OTV lista_svijet V_ZATV
 # vrijedi -> PVAR VRIJEDI SVIJET | PVAR NEVRIJEDI SVIJET
 # provjera -> IME (formule) UPITNIK SVIJET | formula UPITNIK SVIJET
-# koristi -> KORISTI MODEL V_OTV lista_svijet V_ZATV V_OTV lista_pvar V_ZATV
+# koristi -> KORISTI MODEL V_OTV lista_svijet TOČKAZ lista_pvar V_ZATV
 # unos -> MODEL MMANJE IMED (moze ucitati vise datoteka)
 
 # prilikom "definiranja" modela u {} navodimo popis svjetova. U model staviti metodu koja vraća 
@@ -211,9 +211,7 @@ class P(Parser):
             svijet.sljedbenici = set()
             svijet.činjenice = set()
             model.nosač.add(svijet)
-        p >> T.V_ZATV
-        p >= T.ZAREZ
-        p >> T.V_OTV
+        p >> T.TOČKAZ
         pvar = p >> T.PVAR
         svijet.sljedbenici = set()
         svijet.činjenice = set()
@@ -430,11 +428,11 @@ class Unos(AST):
                 for redak in reader:
                     lijevi = redak[0]
                     for i in range(1, len(redak)):
-                        if redak[i][0] in ['T', '1', 'Y', 'I', 'D', 'O']:
+                        if str.toupper(redak[i][0]) in ['T', '1', 'Y', 'I', 'D', 'O']:
                             if tip == 'rel':
                                 lijevi.sljedbenici.add(svjetovi[i + 1])
                             else: lijevi.činjenice.add(pvars[i + 1])
-                        elif redak[i][0] in ['F', '0', 'N', 'L', 'N', 'X']:
+                        elif str.toupper(redak[i][0]) in ['F', '0', 'N', 'L', 'N', 'X']:
                             if tip == 'rel':
                                 lijevi.sljedbenici.discard(svjetovi[i + 1])
                             else: lijevi.činjenice.discard(pvars[i + 1])
