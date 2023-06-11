@@ -501,20 +501,9 @@ while True:
         naredba.izvrši()
         print()
         
-## PRIJEDLOZI
-# optimizator za aritmeticke izraze (ovo je mozda nepotrebno, samo riskiramo neku pogresku, a nije da nam se program na njima bazira)
-# while petlja -> vjerojatno onda AST Petlja preimenovat u FOR i onda zaseban AST za while imena WHILE
-# omogucit vise logickih uvjeta u if-u
-# omogucit ispisivanje korisničkog stringa, npr. ispiši << "Sve je dobro prošlo!";
-
 ## PROBLEMI
 # uveden je token 'formula', odnosno novi tip podatka. Deklaracija je ok, nece bit nikakvih problema, no
 # problem je pridruzivanje s pravilom pridruživanje -> IME JEDNAKO izraz. Nakon uvodjenja tipa formule, ono
 # se treba updateati u pridruživanje -> IME JEDNAKO (izraz | formula), ali hoćemo li u parseru pozvati
 # p.izraz() ili p.formula() ovisi o tome kakvog je tipa IME pa taj problem moramo riješiti (dakle moše se
 # dogoditi nešto poput: formula f = (P0->P1); int a = 3; f = -1; a = f;)
-
-## NAPRAVLJENO U ODNOSU NA ZADNJI PUT
-# dodana funkcija za proof-checker: shemaA1 (nju ce kao korisnik upisati pri svom radu, nece biti u jeziku, ali neka stoji)
-# dodan novi tip 'nat' (prirodni brojevi uključujući i 0)
-# dodana kontrola kompatibilnosti tipova za DEKLARACIJU
