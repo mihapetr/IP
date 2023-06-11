@@ -155,7 +155,7 @@ koristi <ime_modela> { @w1, @w2, ..., @wn };
 
 ### Problemi
 * uveden je token 'formula', odnosno novi tip podatka. Deklaracija je ok, nece bit nikakvih problema, no problem je pridruzivanje s pravilom pridruživanje -> IME JEDNAKO izraz. Nakon uvodjenja tipa formule, ono se treba updateati u pridruživanje -> IME JEDNAKO (izraz | formula), ali hoćemo li u parseru pozvati p.izraz() ili p.formula() ovisi o tome kakvog je tipa IME pa taj problem moramo riješiti (dakle moše se dogoditi nešto poput: formula f = (P0->P1); int a = 3; f = -1; a = f;)
-* prijedlog za rješavanje: napraviti funkciju koja vraća tip od IME (T.INT, T.NAT, T.FORMULA...) i u ovisnosti o tome jesu li kompatibilni tipovi s lijeve i desne strane izvršit pridruživanje. Teoretski bi se to dalo zaključiti iz sadržaja, no opet ako imamo: int a = 3; te onda nekad kasnije a = 5, kako iz sadržaja od 'a' znati je li to int ili nat jer može biti oboje
+	* prijedlog za rješavanje: napraviti funkciju koja vraća tip od IME (T.INT, T.NAT, T.FORMULA...) i u ovisnosti o tome jesu li kompatibilni tipovi s lijeve i desne strane izvršit pridruživanje. Teoretski bi se to dalo zaključiti iz sadržaja, no opet ako imamo: int a = 3; te onda nekad kasnije a = 5, kako iz sadržaja od 'a' znati je li to int ili nat jer može biti oboje
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## roberto.py
