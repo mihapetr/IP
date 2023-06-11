@@ -96,7 +96,7 @@ def ml(lex):
             else: yield lex.token(T.NEG)
         elif znak == '=':
             if lex >= '|': yield lex.token(T.VRIJEDI)
-            else: lex.token(T.JJEDNAKO if lex >= '=' else T.JEDNAKO)
+            else: yield lex.token(T.JJEDNAKO if lex >= '=' else T.JEDNAKO)
         elif znak == '|':
             if lex >= '=': yield lex.token(T.FORSIRA)
             elif lex >= '~': yield lex.token(T.NEFORSIRA)
@@ -104,13 +104,20 @@ def ml(lex):
                 if lex >= '-': yield lex.token(T.FORSIRA)
                 elif lex >= '~': yield lex.token(T.NEFORSIRA)
             else: yield lex.token(T.DISJ)
-        elif znak == '#':
+        elif znak == '\\':
+            lex >> '\\'
             lex - '\n'
             lex.zanemari()
+        elif znak == '#':
+            lex >> str.isalpha
+            lex * { str.isalnum, '_' }
+            yield lex.token(T.IME)
         elif znak == '$':
+            lex.zanemari()
             lex + { str.isalnum, '_' }
             yield lex.token(T.PVAR)
         elif znak == '@':
+            lex.zanemari()
             lex + { str.isalnum, '_' }
             yield lex.token(T.SVIJET)
         elif znak.isupper():
@@ -127,8 +134,7 @@ def ml(lex):
         elif znak.isalnum() or znak == '_':
             lex * { str.isalnum, '_' }
             yield lex.literal_ili(T.IME)
-        else: yield lex.literal
-
+        else: yield lex.literal(T)
 ### BKG ###
 # start -> naredbe naredba
 # naredbe -> '' | naredbe naredba

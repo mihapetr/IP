@@ -2,34 +2,40 @@ from vepar import *
 
 subskript = str.maketrans('0123456789', '₀₁₂₃₄₅₆₇₈₉')
 class PrekidBreak(NelokalnaKontrolaToka): """Signal koji šalje naredba break."""
-class PrekidContinue(NelokalnaKontrolaToka): """Signal koji šalje naredba continue"""
+class PrekidContinue(NelokalnaKontrolaToka): """Signal koji šalje naredba continue."""
 
 class T(TipoviTokena):
+    # Tokeni za modalne formule
     NEG, KONJ, DISJ, O_OTV, O_ZATV = '~&|()'
     KOND, BIKOND = '->', '<->'
     BOX, DIAMOND = '[]', '<>'
-
     class PVAR(Token):
         def optim(self): return self
         def ispis(self): return self.sadržaj.translate(subskript)
         def optim1(self): return self
-    #gornji tokeni su za formule, a donji za program
-    TOČKAZ, V_OTV, V_ZATV = ';{}'
-    FOR, IF, ELSE, WHILE, ISPIŠI = 'for', 'if', 'else', 'while', 'ispiši'
+        def vrijednost(self, w): return (self in w.činjenice) # pogledati komentar u AST-ovima ispis i uvjet (vezano uz naziv ove metode)
+    # Tokeni za svijetove i modele
+    FORSIRA, NEFORSIRA, VRIJEDI, NEVRIJEDI = '|=', '|~', '=|', '~|'
+    class SVIJET(Token):
+        sljedbenici: 'set(T.SVIJET)'
+        činjenice: 'set(T.PVAR)'
+        def vrijednost(self): return self.sadržaj
+    class MODEL(Token):
+        nosač: 'set(T.SVIJET)'
+        def vrijednost(self): return self.sadržaj
+    class IMED(Token):
+        def vrijednost(self): return str(self.sadržaj[1:-1])
+    # Tokeni za jezik
+    TOČKAZ, ZAREZ, V_OTV, V_ZATV, UPITNIK = ';,{}?'
+    FOR, IF, ELSE, WHILE, ISPIŠI, KORISTI = 'for', 'if', 'else', 'while', 'ispiši', 'koristi'
     INT, NAT, FORMULA = 'int', 'nat', 'formula'
-    JEDNAKO, JJEDNAKO, PLUS, PLUSP, PLUSJ, MINUS, MINUSM, MINUSJ, PUTA, NA = '=', '==', '+', '++', '+=', '-', '--', '-=', '*', '^'
-    MANJE, MMANJE, VEĆE = '<', '<<', '>' 
-
-    class CONTINUE(Token):
-        literal = 'continue'
-        def izvrši(self): raise PrekidContinue
-    class BREAK(Token):
-        literal = 'break'
-        def izvrši(self): raise PrekidBreak
-    class BROJ(Token): 
+    JEDNAKO, PLUS,  MINUS, PUTA, NA = '=+-*^'
+    JJEDNAKO, PLUSP, PLUSJ, MINUSM, MINUSJ = '==', '++', '+=', '--', '-='
+    MANJE, MMANJE, VEĆE = '<', '<<', '>'
+    class BROJ(Token):
         def vrijednost(self): return int(self.sadržaj)
-    class IME(Token): 
-        def vrijednost(self): return rt.mem[self]
+    class IME(Token):
+        def vrijednost(self): return rt.mem[self][0]
 
 # donje dvije klase sluze samo za lijepo ispisivanje poruke prilikom nekompatibilnih tipova
 # napravio sam to tako da se lako moze prosirivati kada nove tipove budemo ubacivali
@@ -55,12 +61,6 @@ def ml(lex):
                 lex >> '>'
                 yield lex.token(T.BIKOND)
             else: yield lex.token(T.MANJE)
-        elif znak == 'P':
-            lex.prirodni_broj('')
-            yield lex.token(T.PVAR)
-        elif znak.isalpha() or znak == '_':
-            lex * {str.isalnum, '_'}
-            yield lex.literal_ili(T.IME)
         elif znak.isdecimal():
             lex.prirodni_broj(znak)
             yield lex.token(T.BROJ)
@@ -68,16 +68,58 @@ def ml(lex):
             if lex >= '>': yield lex.token(T.KOND)
             elif lex >= '-': yield lex.token(T.MINUSM)
             elif lex >= '=': yield lex.token(T.MINUSJ)
+            elif lex >= '|':
+                lex >> '|'
+                yield lex.token(T.VRIJEDI)
             else: yield lex.token(T.MINUS)
         elif znak == '+':
             if lex >= '+': yield lex.token(T.PLUSP)
             elif lex >= '=': yield lex.token(T.PLUSJ)
             else: yield lex.token(T.PLUS)
+        elif znak == '~':
+            if lex >= '|': 
+                yield lex.token(T.NEVRIJEDI if lex >= '|' else T.NEVRIJEDI)
+            else: yield lex.token(T.NEG)
         elif znak == '=':
-            yield lex.token(T.JJEDNAKO if lex >= '=' else T.JEDNAKO)
-        elif znak == '#':
+            if lex >= '|': yield lex.token(T.VRIJEDI)
+            else: yield lex.token(T.JJEDNAKO if lex >= '=' else T.JEDNAKO)
+        elif znak == '|':
+            if lex >= '=': yield lex.token(T.FORSIRA)
+            elif lex >= '~': yield lex.token(T.NEFORSIRA)
+            elif lex >= '|':
+                if lex >= '-': yield lex.token(T.FORSIRA)
+                elif lex >= '~': yield lex.token(T.NEFORSIRA)
+            else: yield lex.token(T.DISJ)
+        elif znak == '\\':
+            lex >> '\\'
             lex - '\n'
             lex.zanemari()
+        elif znak == '#':
+            lex >> str.isalpha
+            lex * { str.isalnum, '_' }
+            yield lex.token(T.IME)
+        elif znak == '$':
+            lex.zanemari()
+            lex + { str.isalnum, '_' }
+            yield lex.token(T.PVAR)
+        elif znak == '@':
+            lex.zanemari()
+            lex + { str.isalnum, '_' }
+            yield lex.token(T.SVIJET)
+        elif znak.isupper():
+            lex * { str.isalnum, '_' }
+            yield lex.token(T.MODEL)
+        elif znak == '\"' or znak == '\'':
+            lex + (lambda char: char != znak and char != '.')
+            lex >> '.'
+            lex >> 'm'
+            lex >> 'i'
+            lex >> 'r'
+            lex >> znak
+            yield lex.token(T.IMED)
+        elif znak.isalnum() or znak == '_':
+            lex * { str.isalnum, '_' }
+            yield lex.literal_ili(T.IME)
         else: yield lex.literal(T)
 
 ### beskontekstna gramatika
@@ -104,7 +146,7 @@ def ml(lex):
 # deklaracija -> tip IME JEDNAKO izraz 
 
 ## ovo ispod kasnije će se povezati s gornjim kad se uvedu varijable formula, model itd.
-# formula -> PVAR | NEG formula | DIAMOND formula | BOX formula | O_OTV formula binvez formula O_ZATV
+# formula -> PVAR | NEG formula | DIAMOND formula | BOX formula | O_OTV formula binvez formula O_ZATV 
 # binvez -> KONJ | DISJ | KOND | BIKOND
 
 class P(Parser):
@@ -114,7 +156,7 @@ class P(Parser):
         return Program(naredbe)
     
     def naredba(p):
-        if p > T.FOR: return p.petlja()
+        if p > T.FOR: return p.for_petlja()
         elif p > T.ISPIŠI: return p.ispis()
         elif p > T.IF: return p.grananje()
         elif p > T.IME: return p.pridruživanje()
@@ -127,27 +169,27 @@ class P(Parser):
             return cont
         else: raise SintaksnaGreška('Nepoznata naredba')
     
-    def petlja(p):
+    def for_petlja(p):
         kriva_varijabla = SemantičkaGreška('Sva tri dijela for-petlje moraju imati istu varijablu')
         
         p >> T.FOR, p >> T.O_OTV
-        i = p >> T.IME
+        i = p >> T.IME #NAPOMENA: mozda ovdje ipak stavit uvjet da ime mora imati # kao prvi znak
         p >> T.JEDNAKO
-        početak = p >> {T.BROJ, T.IME}
+        početak = p.izraz()
         p >> T.TOČKAZ
 
         if (p >> T.IME) != i: raise kriva_varijabla
         for_operator = p >> {T.MANJE, T.VEĆE} # ovdje se lako doda ako hocemo podrzati jos neke operatore
-        granica = p >> T.BROJ
+        granica = p.izraz()
         p >> T.TOČKAZ
 
         if (p >> T.IME) != i: raise kriva_varijabla
         if minus_ili_plus := p >= {T.PLUSP, T.MINUSM}: promjena = nenavedeno
-        elif minus_ili_plus := p >> {T.PLUSJ, T.MINUSJ}: promjena = p >> T.BROJ
+        elif minus_ili_plus := p >> {T.PLUSJ, T.MINUSJ}: promjena = p.izraz()
         p >> T.O_ZATV
 
         blok = p.blok()
-        return Petlja(i, početak, for_operator, granica, promjena, minus_ili_plus, blok)
+        return For_Petlja(i, početak, for_operator, granica, promjena, minus_ili_plus, blok)
     
     #blok može biti ili jedna naredba ili {naredbe*} !!!
     def blok(p):
@@ -249,35 +291,35 @@ class Program(AST):
     def izvrši(program):
         try:
             for naredba in program.naredbe: naredba.izvrši()
-        except PrekidBreak: raise SemantičkaGreška('Nedozvoljen break izvan petlje')
-        except PrekidContinue: raise SemantičkaGreška('Nedozvoljen continue izvan petlje')
+        except PrekidBreak: raise SemantičkaGreška('Nedozvoljen break izvan petlje!')
+        except PrekidContinue: raise SemantičkaGreška('Nedozvoljen continue izvan petlje!')
 
-class Petlja(AST):
+class For_Petlja(AST):
     varijabla: 'IME'
-    početak: 'BROJ | varijabla'
+    početak: 'izraz'
     operator: '(<|>)' #mogli bi bit još podržani <= ili >=, ali nije da time dobivamo na ekspresivnosti jezika; eventualno dodati !=
-    granica: 'BROJ'
-    promjena: 'BROJ?'
+    granica: 'izraz'
+    promjena: 'izraz?'
     predznak: '(+|-)'
     blok: 'naredba*'
 
     def izvrši(petlja):
         kv = petlja.varijabla
-        rt.mem[kv] = petlja.početak.vrijednost()
-        while rt.mem[kv] < petlja.granica.vrijednost() if petlja.operator ^ T.MANJE else rt.mem[kv] > petlja.granica.vrijednost():
+        rt.mem[kv] = [petlja.početak.vrijednost()] # NAPOMENA: ovdje ime moze biti bilo koje i ne mora biti deklarirano (vidjet sta ako neko unese formulu npr.); vidi jel stvara probleme
+        while rt.mem[kv][0] < petlja.granica.vrijednost() if petlja.operator ^ T.MANJE else rt.mem[kv][0] > petlja.granica.vrijednost():
             try:
                 petlja.blok.izvrši()
             except PrekidBreak: break
             except PrekidContinue: #nazalost dupliciram kod radi ispravnog rada continue, kasnije mozemo popraviti
                 prom = petlja.promjena
                 if petlja.predznak ^ T.MINUSJ or petlja.predznak ^ T.MINUSM:
-                    rt.mem[kv] -= prom.vrijednost() if prom else 1
-                else: rt.mem[kv] += prom.vrijednost() if prom else 1
+                    rt.mem[kv][0] -= prom.vrijednost() if prom else 1
+                else: rt.mem[kv][0] += prom.vrijednost() if prom else 1
                 continue
             prom = petlja.promjena
             if petlja.predznak ^ T.MINUSJ or petlja.predznak ^ T.MINUSM:
-                rt.mem[kv] -= prom.vrijednost() if prom else 1
-            else: rt.mem[kv] += prom.vrijednost() if prom else 1
+                rt.mem[kv][0] -= prom.vrijednost() if prom else 1
+            else: rt.mem[kv][0] += prom.vrijednost() if prom else 1
 
 class Blok(AST):
     naredbe: 'naredba*'
@@ -291,16 +333,16 @@ class Ispis(AST):
 
     def izvrši(ispis):
         for varijabla in ispis.varijable:
-            print(varijabla.vrijednost(), end = ' ')
+            print(varijabla.vrijednost(), end = ' ') # NAPOMENA: kad se formule nadju kao varijable, treba svakoj formuli dat metodu vrijednost koja poziva metodu za ispisivanje
 
 class Uvjet(AST):
     lijeva: '(IME|BROJ)'
     operator: '(==|<|>)'
     desna: '(IME|BROJ)'
 
-    def ispunjen(uvjet):
+    def ispunjen(uvjet): # NAPOMENA: možda ovo dolje moze ostati i za tip formula (iako je glupo, bolje za njih samo ==, ali lako promijenimo sto zelimo); ponovno: definirati metodu vrijednost za formulu na koji nacin vec zelimo
         if uvjet.operator ^ T.JJEDNAKO:
-            return uvjet.lijeva.vrijednost() == uvjet.desna.vrijednost()
+            return uvjet.lijeva.vrijednost() == uvjet.desna.vrijednost() 
         elif uvjet.operator ^ T.VEĆE:
             return uvjet.lijeva.vrijednost() > uvjet.desna.vrijednost()
         elif uvjet.operator ^ T.MANJE:
@@ -321,9 +363,15 @@ class Pridruživanje(AST):
     vrij: '(varijabla | BROJ)'
 
     def izvrši(pridruživanje):
-        klasa = type(pridruživanje.varijabla)
         if pridruživanje.varijabla in rt.mem:
-            rt.mem[pridruživanje.varijabla] = pridruživanje.vrij.vrijednost()
+            if pridruživanje.varijabla.sadržaj[0] == '#': # ovo se odnosi na ARITMETICKE VARIJABLE jer kod njih ima problema
+                
+                if rt.mem[pridruživanje.varijabla][1] ^ T.NAT and pridruživanje.vrij.vrijednost() < 0:
+                    greska = GreskaTipova()
+                    greska.krivi_tip(pridruživanje.varijabla.sadržaj, Tip.N, Tip.Z)
+                else: rt.mem[pridruživanje.varijabla][0] = pridruživanje.vrij.vrijednost()
+
+            else: rt.mem[pridruživanje.varijabla][0] = pridruživanje.vrij.vrijednost() # ako varijabla nije aritmeticka, onda sve moze (nadopuniti po potrebi)
         else: return rt.mem[pridruživanje.varijabla] #jer ovo vraca bas ono upozorenje koje nam treba
 
 class Deklaracija(AST):
@@ -340,7 +388,7 @@ class Deklaracija(AST):
 
         if deklaracija.ime in rt.mem:
             raise deklaracija.ime.redeklaracija()
-        else: rt.mem[deklaracija.ime] = deklaracija.vrij.vrijednost()
+        else: rt.mem[deklaracija.ime] = [deklaracija.vrij.vrijednost(), deklaracija.tip] #priliikom deklaracije, kljucevi se preslikavaju u listu s dva elementa (par): vrijednost, tip
 
 class Op(AST):
     op: 'T'
@@ -491,19 +539,23 @@ def get_input_with_semicolon(user_input):
     return user_input, flag
 
 
-rt.mem = Memorija()
-while True:
-    user_input = input('> ') # ovo popravit jer se naredba ne moze prostirati kroz više redaka
-    if user_input == 'kraj':
-        break
-    else:
-        naredba = P(user_input)
-        naredba.izvrši()
-        print()
-        
-## PROBLEMI
-# uveden je token 'formula', odnosno novi tip podatka. Deklaracija je ok, nece bit nikakvih problema, no
-# problem je pridruzivanje s pravilom pridruživanje -> IME JEDNAKO izraz. Nakon uvodjenja tipa formule, ono
-# se treba updateati u pridruživanje -> IME JEDNAKO (izraz | formula), ali hoćemo li u parseru pozvati
-# p.izraz() ili p.formula() ovisi o tome kakvog je tipa IME pa taj problem moramo riješiti (dakle moše se
-# dogoditi nešto poput: formula f = (P0->P1); int a = 3; f = -1; a = f;)
+rt.mem = Memorija() #ovo mora bit ovdje, a ne u Program(AST) zbog interaktivnog izvršavanja
+
+prikaz(kod := P('''
+    int #a = 3;
+    nat #b = 2;
+    ispiši << #a << #b;
+    #b = #a;
+    ispiši << #a << #b;
+
+    for (i = 3*2 - 3; i < #a + 10; i += 2^2) ispiši << i; 
+'''), 8)
+kod.izvrši()
+
+#while True:
+#    user_input = input('> ') # ovo popravit jer se naredba ne moze prostirati kroz više redaka
+#    if user_input == 'kraj':
+#        break
+#    else:
+#        naredba = P(user_input)
+#        naredba.izvrši()
