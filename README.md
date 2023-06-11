@@ -154,8 +154,9 @@ koristi <ime_modela> { @w1, @w2, ..., @wn };
 * omogucit ispisivanje korisničkog stringa, npr. ispiši << "Sve je dobro prošlo!";
 
 ### Problemi
-* uveden je token 'formula', odnosno novi tip podatka. Deklaracija je ok, nece bit nikakvih problema, no problem je pridruzivanje s pravilom pridruživanje -> IME JEDNAKO izraz. Nakon uvodjenja tipa formule, ono se treba updateati u pridruživanje -> IME JEDNAKO (izraz | formula), ali hoćemo li u parseru pozvati p.izraz() ili p.formula() ovisi o tome kakvog je tipa IME pa taj problem moramo riješiti (dakle moše se dogoditi nešto poput: formula f = (P0->P1); int a = 3; f = -1; a = f;)
+* **Problem (1)** : uveden je token 'formula', odnosno novi tip podatka. Deklaracija je ok, nece bit nikakvih problema, no problem je pridruzivanje s pravilom pridruživanje -> IME JEDNAKO izraz. Nakon uvodjenja tipa formule, ono se treba updateati u pridruživanje -> IME JEDNAKO (izraz | formula), ali hoćemo li u parseru pozvati p.izraz() ili p.formula() ovisi o tome kakvog je tipa IME pa taj problem moramo riješiti (dakle moše se dogoditi nešto poput: formula f = (P0->P1); int a = 3; f = -1; a = f;)
 	* prijedlog za rješavanje: napraviti funkciju koja vraća tip od IME (T.INT, T.NAT, T.FORMULA...) i u ovisnosti o tome jesu li kompatibilni tipovi s lijeve i desne strane izvršit pridruživanje. Teoretski bi se to dalo zaključiti iz sadržaja, no opet ako imamo: int a = 3; te onda nekad kasnije a = 5, kako iz sadržaja od 'a' znati je li to int ili nat jer može biti oboje
+	* **RIJEŠENO**: iz T.IME možemo razlikovati tip jer formule počinju malim slovom, modeli velikim pa sam stavio da imena varijabli tipa `int, nat' moraju započinjati znakom `#`. Nemogućnost kontrole kompatibilnosti u pridruživanju je riješen tako da se u memoriji za svaki token (koji predstavlja ime varijable) osim njegove vrijednosti pamti i njegov tip (uređeni par koji je zapravo lista s dva elementa: prvi je vrijednost, a drugi tip)
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## roberto.py
@@ -163,6 +164,7 @@ koristi <ime_modela> { @w1, @w2, ..., @wn };
 * funkcija jednaki(f1, f2) koja prima dva AST-a (formule) i uspoređuje ih. Vraća True ako su jednaki, a False ako nisu (9.6.2023.)
 * funkcionalnost: for petlja, if + else naredba, deklaracije varijabli (trenutni tip = int), praćenje je li varijabla deklarirana, javljanje greške ako se varijabla redeklarira ili joj se pridružuje varijabla koja nije do tad deklarirana ili pridružujemo vrijednost varijabli koju do tad nismo deklarirali (osim u for-u), continue, break, aritmetički izrazi (operacije: +, * i ^), ispisivanje varijabli (ispiši<<varijabla|aritmetički izraz), pridruživanje aritmetičkog izraza već deklariranoj aritmetičkoj varijabli (9.6.2023.)
 * dodana funkcija za proof-checker: shemaA1 (nju ce kao korisnik upisati pri svom radu, nece biti u jeziku, ali neka stoji), dodan novi tip 'nat' (prirodni brojevi uključujući i 0), dodana kontrola kompatibilnosti tipova (int i nat) za DEKLARACIJU (10.6.2023.)
+* riješen Problem (1), promijenjeno ime AST-a "Petlja" u "For_Petlja" i ime metode parsera .petlja() u .for_petlja() (11.6.2023.)
 
 ## kosijenac.py
 * svjetovi, relacija doztizivosti, valuacija, model
