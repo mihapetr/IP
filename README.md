@@ -165,7 +165,12 @@ koristi <ime_modela> { @w1, @w2, ..., @wn };
 * dodana funkcija za proof-checker: shemaA1 (nju ce kao korisnik upisati pri svom radu, nece biti u jeziku, ali neka stoji), dodan novi tip 'nat' (prirodni brojevi uključujući i 0), dodana kontrola kompatibilnosti tipova (int i nat) za DEKLARACIJU (10.6.2023.)
 
 ## kosijenac.py
-* svjetovi, relacija doztizivosti i valuacija (jos nije implementirano ucitavanje modela iz datoteke)
-* AST `Test` koji nastaje iz naredbe oblika `formula ? @svijet` i testira istinitost formule na svijetu (jos nije isprobano jer treba ucitavanje modela iz datoteke za uopce definirati svjetove)
+* svjetovi, relacija doztizivosti, valuacija, model
+* model naziva `M` sa svjetovima @svijet1, @svijet2, @svijet3 i prop. varijablama $pada_kisa, $ulice_su_mokre i $prolazi_cisterna deklarira se kao `koristi M { @svijet1, @svijet2, @svijet3; $pada_kisa, $ulice_su_mokre, $prolazi_cisterna }`
+* AST `Provjera` koji nastaje iz naredbe oblika `formula ? @svijet` i testira istinitost formule na svijetu
 * Implementirani simboli `|=`, `=|`, `|~` i `~|` kao AST-ovi `Forsira`, `Vrijedi`, `Neforsira` i `Nevrijedi`, redom.
-* TODO: uskladiti s robertovom verzijom, uvesti ucitavanje iz datoteke, testirati `Test` klasu
+* Impl. aliasi za simbole `||-`, `-||`, `||~` i `~||`, redom
+* Unos iz datoteke se obavlja kao `M << "relacijska_dat.mir" << 'val_datoteka.mir'` (obvezna je uporaba navodnika oko naziva datoteke, mogu biti jednostruki ili dvostruki ali se moraju poklapati)
+* U relacijskoj datoteci mora prvo pisati "rel" (bitno je da su to prva 3 slova, smije pisati i npr. "relacija"), analogno za valuacijsku datoteku gdje mora pisati "val".
+* U valuacijskoj su datoteci svijetovi u stupcu slijeva a prop. varijable u prvom retku, dok su u relacijskoj svjetovi s "lijeve" strane relacije u stupcu slijeva. Oznaka za istinitost relacije odnosno forsiranja smije biti u raznim oblicima: bilo koji string kojem je prvi znak 'T', '1', 'Y', 'I', 'D' ili 'O' se interpretira kao istina, a za 'F', '0', 'N', 'L', 'N' i 'X' je neistina.
+* TODO: testirati klasu `Provjera`
