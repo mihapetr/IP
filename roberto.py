@@ -247,7 +247,6 @@ class Program(AST):
     naredbe: 'barem jedna naredba'
 
     def izvrši(program):
-        rt.mem = Memorija()
         try:
             for naredba in program.naredbe: naredba.izvrši()
         except PrekidBreak: raise SemantičkaGreška('Nedozvoljen break izvan petlje')
@@ -322,6 +321,7 @@ class Pridruživanje(AST):
     vrij: '(varijabla | BROJ)'
 
     def izvrši(pridruživanje):
+        klasa = type(pridruživanje.varijabla)
         if pridruživanje.varijabla in rt.mem:
             rt.mem[pridruživanje.varijabla] = pridruživanje.vrij.vrijednost()
         else: return rt.mem[pridruživanje.varijabla] #jer ovo vraca bas ono upozorenje koje nam treba
@@ -474,26 +474,33 @@ def shemaA1(f):
         return False
     return lijeva_formula.ispis() == desna_formula.desna.ispis()
     
-### ispod je samo testiranje
 
-prikaz(kôd := P('''
-    # ovo je komentar
-    int a = 1;
-    int b = a + a + 3;
-    nat c = b;
-    c = -1; #ovdje je problem jer pri pridruzivanju nemamo kontrolu nad kompatibilnosti
-    
-    for ( i = c ; i < 13 ; i++ ) {
-        if (i == 10) {
-            ispiši << a;
-            continue;
-        } else {
-            ispiši << i;
-        }
-    }
-'''), 8)
-kôd.izvrši()
+# interaktivni unos -> todo: namjestiti da se korisnički input učitava sve dok se ne stavi;
+# kada budemo imali unos programa iz datoteke, staviti opciju gdje korisnik bira hoće li unesti program iz datoteke ili će interaktivno pisati naredbe
+# donja funkcija bi mogla biti od koristi
+import sys
+def get_input_with_semicolon(user_input):
+    flag = False
+    while True:
+        char = sys.stdin.read(1)
+        user_input += char
+        if char == ';':
+            flag = True
+            break
 
+    return user_input, flag
+
+
+rt.mem = Memorija()
+while True:
+    user_input = input('> ') # ovo popravit jer se naredba ne moze prostirati kroz više redaka
+    if user_input == 'kraj':
+        break
+    else:
+        naredba = P(user_input)
+        naredba.izvrši()
+        print()
+        
 ## PRIJEDLOZI
 # optimizator za aritmeticke izraze (ovo je mozda nepotrebno, samo riskiramo neku pogresku, a nije da nam se program na njima bazira)
 # while petlja -> vjerojatno onda AST Petlja preimenovat u FOR i onda zaseban AST za while imena WHILE
