@@ -13,17 +13,28 @@ class T(TipoviTokena):
         def optim(self): return self
         def ispis(self): return self.sadržaj.translate(subskript)
         def optim1(self): return self
-        def vrijednost(self, w): return (self in w.činjenice)
+        def vrijednost(self, w): return (self.sadržaj in w.činjenice)
+        def __eq__(self, o): return self.ispis() == o.ispis
     # Tokeni za svijetove i modele
     FORSIRA, NEFORSIRA, VRIJEDI, NEVRIJEDI = '|=', '|~', '=|', '~|'
-    # FORSIRA_AL, NEFORSIRA_AL, VRIJEDI_AL, NEVRIJEDI_AL = '||-', '||~', '-||', '~||'
     class SVIJET(Token):
         sljedbenici: set(T.SVIJET)
         činjenice: set(T.PVAR)
         def vrijednost(self): return self.sadržaj
     class MODEL(Token):
+        pvars: set(T.PVAR)
         nosač: set(T.SVIJET)
         def vrijednost(self): return self.sadržaj
+        def nađi_svijet(self, naziv): 
+            for svijet in self.nosač:
+                if svijet.sadržaj == naziv:
+                    return svijet
+            return nenavedeno
+        def nađi_pvar(self, naziv): 
+            for pvar in self.pvars:
+                if pvar.sadržaj == naziv:
+                    return pvar
+            return nenavedeno
     class IMED(Token):
         def vrijednost(self): return str(self.sadržaj[1:-1])
     # Tokeni za jezik
@@ -36,7 +47,8 @@ class T(TipoviTokena):
     class BROJ(Token):
         def vrijednost(self): return int(self.sadržaj)
     class IME(Token):
-        def vrijednost(self): return rt.mem[self]
+        def vrijednost(self): return rt.mem[self][0]
+        def tip(self): return rt.mem[self][1]
 
 # donje dvije klase sluze samo za lijepo ispisivanje poruke prilikom nekompatibilnih tipova
 # napravio sam to tako da se lako moze prosirivati kada nove tipove budemo ubacivali
@@ -95,11 +107,9 @@ def ml(lex):
             lex - '\n'
             lex.zanemari()
         elif znak == '$':
-            lex.zanemari()
             lex + { str.isalnum, '_' }
             yield lex.token(T.PVAR)
         elif znak == '@':
-            lex.zanemari()
             lex + { str.isalnum, '_' }
             yield lex.token(T.SVIJET)
         elif znak.isupper():
@@ -125,7 +135,8 @@ def ml(lex):
 # naredba -> forsira TOČKAZ | vrijedi TOČKAZ | provjera TOČKAZ | koristi TOČKAZ | TOČKAZ
 # pridruživanje -> IME JEDNAKO formula | IME JEDNAKO izraz
 # deklaracija -> FORMULA IME JEDNAKO formula | INT IME JEDNAKO izraz | NAT IME JEDNAKO izraz
-# formula -> PVAR | NEG formula | DIAMOND formula | BOX formula | O_OTV formula binvez formula O_ZATV | IME (formule)
+# formula -> PVAR | NEG formula | DIAMOND formula | BOX formula
+# formula -> O_OTV formula binvez formula O_ZATV | IME (formule)
 # binvez -> KONJ | DISJ | KOND | BIKOND
 # for_operator -> MANJE | VEĆE
 # promjena -> PLUSP | MINUSM | PLUSJ BROJ | MINUSJ BROJ
@@ -150,11 +161,11 @@ def ml(lex):
 # vrijedi -> PVAR VRIJEDI V_OTV lista_svijet V_ZATV | PVAR NEVRIJEDI V_OTV lista_svijet V_ZATV
 # vrijedi -> PVAR VRIJEDI SVIJET | PVAR NEVRIJEDI SVIJET
 # provjera -> IME (formule) UPITNIK SVIJET | formula UPITNIK SVIJET
-# koristi -> KORISTI MODEL V_OTV lista_svijet V_ZATV
-# unos -> MODEL MMANJE IMED (moze ucitati vise datoteka) 
+# koristi -> KORISTI MODEL V_OTV lista_svijet V_ZATV V_OTV lista_pvar V_ZATV
+# unos -> MODEL MMANJE IMED (moze ucitati vise datoteka)
 
-# prilikom "definiranja" modela u {} navodimo popis svjetova. U model staviti metodu koja vraća odgovarajući token na temelju sadržaja
-# ispis modela ostvariti uz pomoc ispisa svjetova
+# prilikom "definiranja" modela u {} navodimo popis svjetova. U model staviti metodu koja vraća 
+# odgovarajući token na temelju sadržaja ispis modela ostvariti uz pomoc ispisa svjetova
 # problem kompatibilnosti int i nat rijesen uz koristenje liste koja predstavlja par tipa i vrijednosti
 # model -> veliko; formula -> malo; int, nat -> #  
 # komentar: //
@@ -183,8 +194,44 @@ class P(Parser):
         if cont := p >= T.CONTINUE:
             p >> T.TOČKAZ
             return cont
-        # stavit p.formula()
-        raise SintaksnaGreška('Nepoznata naredba')
+        return p.formula()
+
+    def koristi(p):
+        p >> T.KORISTI
+        model = p >> T.MODEL
+        model.nosač = set()
+        p >> T.V_OTV
+        svijet = p >> T.SVIJET
+        svijet.sljedbenici = set()
+        svijet.činjenice = set()
+        model.nosač.add(svijet)
+        while p >= ZAREZ:
+            svijet = p >> T.SVIJET
+            svijet.sljedbenici = set()
+            svijet.činjenice = set()
+            model.nosač.add(svijet)
+        p >> T.V_ZATV
+        p >= T.ZAREZ
+        p >> T.V_OTV
+        pvar = p >> T.PVAR
+        svijet.sljedbenici = set()
+        svijet.činjenice = set()
+        model.nosač.add(svijet)
+        while p >= ZAREZ:
+            svijet = p >> T.SVIJET
+            svijet.sljedbenici = set()
+            svijet.činjenice = set()
+            model.nosač.add(svijet)
+        p >> T.V_ZATV
+        p >> T.TOČKAZ
+        return Koristi(model)
+
+    def unos(p):
+        model = p >> T.MODEL
+        datoteke = []
+        while p >= T.MMANJE: datoteke.append(p >> T.IMED)
+        p >> T.TOČKAZ
+        return Unos(model, datoteke)
     
     def petlja(p):
         kriva_varijabla = SemantičkaGreška('Sva tri dijela for-petlje moraju imati istu varijablu')
@@ -244,12 +291,15 @@ class P(Parser):
         ime_varijable = p >> T.IME
         p >> T.JEDNAKO
         # provjera koji nam je tip s lijeve strane (samo formule još dolaze)
-        vrijednost = p.izraz()
+        if ime_varijable.tip() ^ T.FORMULA:
+            vrijednost = p.formula()
+        else:
+            vrijednost = p.izraz()
         p >> T.TOČKAZ
         return Pridruživanje(ime_varijable, vrijednost)
     
     def deklaracija(p):
-        tip = p >> {T.INT, T.NAT, T.FORMULA} #kad budemo imali vise tipova, onda cemo imati p > {T.INT, T.FORMULA...}
+        tip = p >> {T.INT, T.NAT, T.FORMULA}
         ime = p >> T.IME
         p >> T.JEDNAKO
         # U ovisnosti sto je s lijeve strane, treba zvati odg. metodu 
@@ -278,7 +328,8 @@ class P(Parser):
 
     def baza(p):
         if elementarni := p >= {T.BROJ, T.IME}: 
-            return elementarni #valjda tu nece bit problema kod T.IME jer to ce kasnije bit naziv za neku varijablu koja ne mora biti aritmetickog tipa
+            if elementarni.tip() ^ { T.INT, T.NAT }:
+                return elementarni
         elif p >> T.O_OTV:
             u_zagradi = p.izraz()
             p >> T.O_ZATV
@@ -294,6 +345,7 @@ class P(Parser):
             l, klasa, d = p.formula(), p.binvez(), p.formula()
             p >> T.O_ZATV
             return klasa(l, d)
+        raise SintaksnaGreška('Nepoznata naredba')
         
     def unvez(p):
         if p >= T.NEG: return Negacija
@@ -308,6 +360,28 @@ class P(Parser):
         elif p >= T.BIKOND: return Bikondicional
         else: raise p.greška()
 
+    def forsira(p):
+        w = p >> T.SVIJET
+        simb = p >> { T.FORSIRA, T.NEFORSIRA }
+        lista_pvar = []
+        if p >= T.V_OTV:
+            lista_pvar.append(p >> T.PVAR)
+            while p >= ZAREZ: lista_pvar.append(p >> T.PVAR)
+            p >> T.V_ZATV
+        else: lista_pvar.append(p >> T.PVAR)
+        return Forsira(w, lista_pvar, simb)
+        
+    def vrijedi(p):
+        pvar = p >> T.PVAR
+        simb = p >> { T.VRIJEDI, T.NEVRIJEDI }
+        lista_svijet = []
+        if p >= T.V_OTV:
+            lista_pvar.append(p >> T.SVIJET)
+            while p >= ZAREZ: lista_pvar.append(p >> T.SVIJET)
+            p >> T.V_ZATV
+        else: lista_pvar.append(p >> T.SVIJET)
+        return Vrijedi(pvar, lista_svijet, simb)
+
 class Program(AST):
     naredbe: 'barem jedna naredba'
 
@@ -317,6 +391,54 @@ class Program(AST):
         except PrekidBreak: raise SemantičkaGreška('Nedozvoljen break izvan petlje')
         except PrekidContinue: raise SemantičkaGreška('Nedozvoljen continue izvan petlje')
 
+class Koristi(AST):
+    model: T.MODEL
+    def izvrši(self):
+        rt.mem['using'] = self.model
+
+class Unos(AST):
+    model: T.MODEL
+    datoteke: list(T.IMED)
+    def izvrši(self):
+        for dat in self.datoteke:
+            with open(dat.vrijednost(), newline='') as csv_dat:
+                reader = csv.reader(csv_dat, delimiter=' ')
+                prvi_red = next(reader)
+                tip = prvi_red[0][:3]
+                if tip == 'rel':
+                    svjetovi = []
+                elif tip == 'val': 
+                    pvars = []
+                else:
+                    raise IOError('Neispravan tip datoteke: mora biti "rel" ili "val".')
+                    return -1
+                if tip == 'rel':
+                    for i in range(1, len(prvi_red)):
+                        if novi := self.model.nađi_svijet(prvi_red[i]):
+                            if novi in svjetovi:
+                                raise IOError('Svijet se navodi dvaput.')
+                            else: svjetovi.append(novi)
+                        else: raise IOError('Svijet nije deklariran.')
+                else:
+                    for i in range(1, len(prvi_red)):
+                        if nova := self.model.nađi_pvar(prvi_red[i]):
+                            if nova in pvars:
+                                raise IOError('Propozicionalna varijabla navodi se dvaput.')
+                            else: pvars.append(nova)
+                        else: raise IOError('Propozicionalna varijabla nije deklarirana.')
+                for redak in reader:
+                    lijevi = redak[0]
+                    for i in range(1, len(redak)):
+                        if redak[i][0] in ['T', '1', 'Y', 'I', 'D', 'O']:
+                            if tip == 'rel':
+                                lijevi.sljedbenici.add(svjetovi[i + 1])
+                            else: lijevi.činjenice.add(pvars[i + 1])
+                        elif redak[i][0] in ['F', '0', 'N', 'L', 'N', 'X']:
+                            if tip == 'rel':
+                                lijevi.sljedbenici.discard(svjetovi[i + 1])
+                            else: lijevi.činjenice.discard(pvars[i + 1])
+                        else: raise IOError('Neispravna oznaka istinitosti u tablici.')
+                        
 class Petlja(AST):
     varijabla: 'IME'
     početak: 'BROJ | varijabla'
@@ -397,7 +519,9 @@ class Deklaracija(AST):
     vrij: 'varijabla | BROJ'
 
     def izvrši(deklaracija):                                              
-        if deklaracija.tip ^ T.NAT and deklaracija.vrij.vrijednost() < 0: #na ovaj nacin bi sva ostala nepodudaranja u tipovima mogli rjesavati; uoči da se ovo mora rješavat u AST-u, a ne u odgovarajućoj metodi parsera
+        # na ovaj nacin bi sva ostala nepodudaranja u tipovima mogli rjesavati
+        # uoči da se ovo mora rješavat u AST-u, a ne u odgovarajućoj metodi parsera
+        if deklaracija.tip ^ T.NAT and deklaracija.vrij.vrijednost() < 0: 
             tip1 = Tip.N
             tip2 = Tip.Z
             greska = GreskaTipova()
@@ -446,6 +570,8 @@ class Unarna(AST):
             return Negacija(nova_klasa)
         else: return self
 
+    def __eq__(self, o): return jednaki(self.ispod, o.ispod)
+
     def ispis(self): 
         return self.veznik + self.ispod.ispis()
     
@@ -455,12 +581,21 @@ class Unarna(AST):
 
 class Negacija(Unarna):
     veznik = '¬'
+    def vrijednost(self, w): return not self.ispod.vrijednost(w)
     
 class Diamond(Unarna):
     veznik = '◆'
+    def vrijednost(self, w):
+        for sljedbenik in w.sljedbenici:
+            if self.ispod.vrijednost(sljedbenik): return True
+        return False
 
 class Box(Unarna):
     veznik = '■'
+    def vrijednost(self, w):
+        for sljedbenik in self.svijet.sljedbenici:
+            if not self.ispod.vrijednost(sljedbenik): return False
+        return True
 
 class Binarna(AST):
     lijevo: 'formula'
@@ -490,6 +625,8 @@ class Binarna(AST):
             return Negacija(nova_klasa)
         else: return self
 
+    def __eq__(self, o): return jednaki(self.lijevo, o.lijevo) and jednaki(self.desno, o.desno)
+
     def ispis(self): return '(' + self.lijevo.ispis() + self.veznik + self.desno.ispis() + ')'
 
     #provjeri ovo
@@ -498,17 +635,50 @@ class Binarna(AST):
 
 class Disjunkcija(Binarna):
     veznik = '∨'
+    def vrijednost(self, w): return self.lijevo.vrijednost(w) or self.desno.vrijednost(w)
 
 class Konjunkcija(Binarna):
     veznik = '∧'
+    def vrijednost(self, w): return self.lijevo.vrijednost(w) and self.desno.vrijednost(w)
 
 class Kondicional(Binarna):
     veznik = '→'
+    def vrijednost(self, w): return self.lijevo.vrijednost(w) <= self.desno.vrijednost(w)
 
 class Bikondicional(Binarna):
     veznik = '↔'
+    def vrijednost(self, w): return self.lijevo.vrijednost(w) == self.desno.vrijednost(w)
 
+class Provjera(AST):
+    svijet: T.SVIJET
+    formula: 'formula'
+    def izvrši(self): return self.formula.vrijednost(self.svijet)
 
+class Forsira(AST):
+    svijet: T.SVIJET
+    pvars: list(T.PVAR)
+    simbol: 'T.FORSIRA | T.NEFORSIRA'
+    def izvrši(self):
+        if self.svijet not in rt.mem['using'].nosač:
+            raise SemantičkaGreška('Svijet nije deklariran.')
+        for pvar in self.pvars:
+            if self.simbol == T.FORSIRA:
+                self.svijet.činjenice.add(pvar.sadržaj)
+            elif self.simbol == T.NEFORSIRA: 
+                self.svijet.činjenice.discard(pvar.sadržaj)
+
+class Vrijedi(AST):
+    pvar: T.PVAR
+    svjetovi: list(T.SVIJET)
+    simbol: 'T.VRIJEDI | T.NEVRIJEDI'
+    def izvrši(self):
+        for svijet in self.svjetovi:
+            if svijet not in rt.mem['using'].nosač:
+                raise SemantičkaGreška('Svijet nije deklariran.')
+            elif self.simbol == T.VRIJEDI:
+                svijet.činjenice.add(self.pvar.sadržaj)
+            elif self.simbol == T.NEVRIJEDI:
+                svijet.činjenice.discard(self.pvar.sadržaj)
 
 
 def optimiziraj(formula):
@@ -524,10 +694,7 @@ def jednaki(f1, f2):
 
     if klasa1 != klasa2:
         return False
-    elif f1 ^ T.PVAR:
-        return f1.ispis() == f2.ispis()
-    elif isinstance(f1, Binarna): return jednaki(f1.lijevo, f2.lijevo) and jednaki(f1.desno, f2.desno)
-    else: return jednaki(f1.ispod, f2.ispod)
+    return f1 == f2
 
 # provjerava je li formula f shema aksioma A1
 # NISAM TESTIRAO jer još nemamo implementiranu varijablu tipa formula

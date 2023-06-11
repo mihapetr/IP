@@ -1,4 +1,5 @@
 from vepar import *
+import csv
 
 class T(TipoviTokena):
     # Tokeni za modalne formule
@@ -319,9 +320,9 @@ class P(Parser):
         else: lista_pvar.append(p >> T.SVIJET)
         return Vrijedi(pvar, lista_svijet, simb)
 
-
-
-### *** AST-ovi *** ###
+##############################################
+############## *** AST-ovi *** ###############
+##############################################
 
 class Program(AST):
     naredbe: 'naredba[]'
@@ -339,7 +340,18 @@ class Unos(AST):
     model: T.MODEL
     datoteke: list(T.IMED)
     def izvrši(self):
-        ...
+        for dat in self.datoteke:
+            with open(dat.vrijednost().replace('.mir', '.csv'), newline='') as csv_dat:
+                reader = csv.reader(csv_dat, delimiter=' ')
+                prvi_red = next(reader)
+                tip = prvi_red[0]
+                for i in range(1, len(prvi_red)):
+                    novi = T.SVIJET()
+                    novi.sadržaj = prvi_red[i]
+                    self.model.nosač.add(novi)
+                for redak in reader:
+                    
+
     
 class Pridruživanje(AST):
     definiendum: T.IME
