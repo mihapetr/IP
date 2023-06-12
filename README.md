@@ -165,6 +165,7 @@ koristi <ime_modela> { @w1, @w2, ..., @wn };
 * funkcionalnost: for petlja, if + else naredba, deklaracije varijabli (trenutni tip = int), praćenje je li varijabla deklarirana, javljanje greške ako se varijabla redeklarira ili joj se pridružuje varijabla koja nije do tad deklarirana ili pridružujemo vrijednost varijabli koju do tad nismo deklarirali (osim u for-u), continue, break, aritmetički izrazi (operacije: +, * i ^), ispisivanje varijabli (ispiši<<varijabla|aritmetički izraz), pridruživanje aritmetičkog izraza već deklariranoj aritmetičkoj varijabli (9.6.2023.)
 * dodana funkcija za proof-checker: shemaA1 (nju ce kao korisnik upisati pri svom radu, nece biti u jeziku, ali neka stoji), dodan novi tip 'nat' (prirodni brojevi uključujući i 0), dodana kontrola kompatibilnosti tipova (int i nat) za DEKLARACIJU (10.6.2023.)
 * riješen Problem (1), promijenjeno ime AST-a "Petlja" u "For_Petlja" i ime metode parsera .petlja() u .for_petlja() (11.6.2023.)
+* uveden novi tip varijable `formula` te su riješene sve moguće nekompatibilnosti koje mogu nastati prilikom deklaracije, pridruživanja i unutar uvjeta for petlje između tipova `int`, `nat` i `formula`. Također, dodana je mogućnost ispisa formule te novi uvjet unutar if-a (if (f == g) ... gdje f i g predstavljaju varijable tipa formula). Pripremljen je dio gramatike koji zahtjeva nove metode parsera i AST-ove, a sve to se jednostavno ubacuje jer je neovisno o svemu dosad napravljenom (12.6.2023.)
 
 ## kosijenac.py
 * svjetovi, relacija doztizivosti, valuacija, model
