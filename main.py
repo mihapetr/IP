@@ -1,3 +1,7 @@
+# korštenje main funkcije importane iz miha_module pozivom: main()
+# jedina funkcija koja se poziva u main.py na kraju skripte
+
+from miha_module import *
 from vepar import *
 import csv
 
