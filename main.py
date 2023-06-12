@@ -50,6 +50,12 @@ class T(TipoviTokena):
     class IME(Token):
         def vrijednost(self): return rt.mem[self][0]
         def tip(self): return rt.mem[self][1]
+    class CONTINUE(Token):
+        literal = 'continue'
+        def izvrši(self): raise PrekidContinue
+    class BREAK(Token):
+        literal = 'break'
+        def izvrši(self): raise PrekidBreak
 
 # donje dvije klase sluze samo za lijepo ispisivanje poruke prilikom nekompatibilnih tipova
 # napravio sam to tako da se lako moze prosirivati kada nove tipove budemo ubacivali
@@ -206,27 +212,24 @@ class P(Parser):
     def koristi(p):
         p >> T.KORISTI
         model = p >> T.MODEL
-        model.nosač = set()
+        model.nosač = []
+        model.pvars = []
         p >> T.V_OTV
         svijet = p >> T.SVIJET
-        svijet.sljedbenici = set()
-        svijet.činjenice = set()
-        model.nosač.add(svijet)
-        while p >= ZAREZ:
+        svijet.sljedbenici = []
+        svijet.činjenice = []
+        model.nosač.append(svijet)
+        while p >= T.ZAREZ:
             svijet = p >> T.SVIJET
-            svijet.sljedbenici = set()
-            svijet.činjenice = set()
-            model.nosač.add(svijet)
+            svijet.sljedbenici = []
+            svijet.činjenice = []
+            model.nosač.append(svijet)
         p >> T.TOČKAZ
         pvar = p >> T.PVAR
-        svijet.sljedbenici = set()
-        svijet.činjenice = set()
-        model.nosač.add(svijet)
-        while p >= ZAREZ:
-            svijet = p >> T.SVIJET
-            svijet.sljedbenici = set()
-            svijet.činjenice = set()
-            model.nosač.add(svijet)
+        model.pvars.append(pvar)
+        while p >= T.ZAREZ:
+            pvar = p >> T.PVAR
+            model.pvars.append(pvar)
         p >> T.V_ZATV
         p >> T.TOČKAZ
         return Koristi(model)
@@ -419,14 +422,14 @@ class Unos(AST):
                     return -1
                 if tip == 'rel':
                     for i in range(1, len(prvi_red)):
-                        if novi := self.model.nađi_svijet(prvi_red[i]):
+                        if novi := self.model.nađi_svijet('@' + prvi_red[i]):
                             if novi in svjetovi:
                                 raise IOError('Svijet se navodi dvaput.')
                             else: svjetovi.append(novi)
                         else: raise IOError('Svijet nije deklariran.')
                 else:
                     for i in range(1, len(prvi_red)):
-                        if nova := self.model.nađi_pvar(prvi_red[i]):
+                        if nova := self.model.nađi_pvar('$' + prvi_red[i]):
                             if nova in pvars:
                                 raise IOError('Propozicionalna varijabla navodi se dvaput.')
                             else: pvars.append(nova)
@@ -436,12 +439,12 @@ class Unos(AST):
                     for i in range(1, len(redak)):
                         if str.toupper(redak[i][0]) in ['T', '1', 'Y', 'I', 'D', 'O']:
                             if tip == 'rel':
-                                lijevi.sljedbenici.add(svjetovi[i + 1])
-                            else: lijevi.činjenice.add(pvars[i + 1])
+                                lijevi.sljedbenici.append(svjetovi[i + 1])
+                            else: lijevi.činjenice.append(pvars[i + 1])
                         elif str.toupper(redak[i][0]) in ['F', '0', 'N', 'L', 'N', 'X']:
                             if tip == 'rel':
-                                lijevi.sljedbenici.discard(svjetovi[i + 1])
-                            else: lijevi.činjenice.discard(pvars[i + 1])
+                                lijevi.sljedbenici.remove(svjetovi[i + 1])
+                            else: lijevi.činjenice.remove(pvars[i + 1])
                         else: raise IOError('Neispravna oznaka istinitosti u tablici.')
                         
 class Petlja(AST):
@@ -668,9 +671,9 @@ class Forsira(AST):
             raise SemantičkaGreška('Svijet nije deklariran.')
         for pvar in self.pvars:
             if self.simbol == T.FORSIRA:
-                self.svijet.činjenice.add(pvar.sadržaj)
+                self.svijet.činjenice.append(pvar.sadržaj)
             elif self.simbol == T.NEFORSIRA: 
-                self.svijet.činjenice.discard(pvar.sadržaj)
+                self.svijet.činjenice.remove(pvar.sadržaj)
 
 class Vrijedi(AST):
     pvar: T.PVAR
@@ -681,9 +684,9 @@ class Vrijedi(AST):
             if svijet not in rt.mem['using'].nosač:
                 raise SemantičkaGreška('Svijet nije deklariran.')
             elif self.simbol == T.VRIJEDI:
-                svijet.činjenice.add(self.pvar.sadržaj)
+                svijet.činjenice.append(self.pvar.sadržaj)
             elif self.simbol == T.NEVRIJEDI:
-                svijet.činjenice.discard(self.pvar.sadržaj)
+                svijet.činjenice.remove(self.pvar.sadržaj)
 
 
 def optimiziraj(formula):
@@ -715,5 +718,13 @@ def shemaA1(f):
         return False
     return lijeva_formula.ispis() == desna_formula.desna.ispis()
     
-
-
+prikaz(kod := P('''
+    koristi M { @svijet, @world, @za_warudo, @el_mundo; $pada_kisa, $ulice_su_mokre, $prolazi_cisterna };
+    M << "rel_dat.mir" << "val_dat.mir";
+    int br = 5;
+    formula a_1 = ($pada_kisa -> $ulice_su_mokre);
+    // formula nuzno_a1 = [](a_1);
+    ispiši << a_1 ? @svijet << a_1 ? @world;
+    // ispiši << nuzno_a1 ? @el_mundo << nuzno_a1 ? @za_warudo;
+'''), 8)
+kod.izvrši()
