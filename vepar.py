@@ -333,6 +333,16 @@ class Token(collections.namedtuple('TokenTuple', 'tip sadržaj')):
             return self
         else: return nenavedeno
 
+    def __hash__(self):
+        """Za spremanje tokena u strukture podataka koje koriste hash tablice, npr. skupovi."""
+        return hash((self.tip.name, self.sadržaj))
+
+    def __eq__(self, o):
+        return self.tip.name == o.tip.name and self.sadržaj == o.sadržaj
+
+    def __ne__(self, o):
+        return not self.__eq__(o)
+
     def neočekivan(self, info=''):
         """Konstruira sintaksnu grešku: neočekivani tip tokena."""
         if self.tip is KRAJ: poruka = 'Neočekivani kraj ulaza'
