@@ -62,5 +62,3 @@ def main() :
         # CATCHALL DEBUG
         else :
             print("nepokriven slučaj!") # za debug; ne bi trebalo doći do toga
-
-main()
