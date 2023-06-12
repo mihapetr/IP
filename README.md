@@ -15,10 +15,12 @@ Projekt iz kolegija ***Interpretacija programa*** u kojem će biti implementiran
 
 ## 2. Aritmetika
 * podržani aritmetički operatori: `+, -, *, ^`
-* tipovi: `int` (cijeli brojevi), `nat` (prirodni brojevi, uključujući i 0) -> početni znak: `#`
+* tipovi: `int` (cijeli brojevi), `nat` (prirodni brojevi, uključujući i 0)
+* početni znak: `#`
 
 ## 3. Petlje 
-* if + else; petlje: while, for; if, while, for sadržavaju uvjet i tijelo koje se nalazi unutar vitičastih zagrada
+* `if, else` : svaki oblik podržan
+* petlje: `for`, 'while' (#todo)
 
 ## 4. Funkcije
 * definicija funkcija i funkcijski pozivi. Primjeri funkcija bit će sami algoritmi čiji će izlaz biti važni teorijski rezultati
