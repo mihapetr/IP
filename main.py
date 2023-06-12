@@ -51,7 +51,8 @@ class T(TipoviTokena):
     class BROJ(Token):
         def vrijednost(self): return int(self.sadržaj)
     class IME(Token):
-        def vrijednost(self): return self.sadržaj
+        def vrijednost(self): return rt.mem[self][0]
+        def tip_varijable(self): return rt.mem[self][1]
     class CONTINUE(Token):
         literal = 'continue'
         def izvrši(self): raise PrekidContinue
@@ -112,8 +113,8 @@ def ml(lex):
                 if lex >= '-': yield lex.token(T.FORSIRA)
                 elif lex >= '~': yield lex.token(T.NEFORSIRA)
             else: yield lex.token(T.DISJ)
-        elif znak == '\\':
-            lex >> '\\'
+        elif znak == '/':
+            lex >> '/'
             lex - '\n'
             lex.zanemari()
         elif znak == '#':
@@ -121,11 +122,9 @@ def ml(lex):
             lex * { str.isalnum, '_' }
             yield lex.token(T.IME)
         elif znak == '$':
-            lex.zanemari()
             lex + { str.isalnum, '_' }
             yield lex.token(T.PVAR)
         elif znak == '@':
-            lex.zanemari()
             lex + { str.isalnum, '_' }
             yield lex.token(T.SVIJET)
         elif znak.isupper():
@@ -242,6 +241,11 @@ class P(Parser):
         while p >= T.MMANJE: datoteke.append(p >> T.IMED)
         p >> T.TOČKAZ
         return Unos(model, datoteke)
+
+    def provjera(p, ime):
+        w = p >> T.SVIJET
+        p >> T.TOČKAZ
+        return Provjera(w, ime.vrijednost())
     
     def petlja(p):
         kriva_varijabla = SemantičkaGreška('Sva tri dijela for-petlje moraju imati istu varijablu')
@@ -297,11 +301,12 @@ class P(Parser):
         desna_strana = p >> {T.IME, T.BROJ}
         return Uvjet(lijeva_strana, op, desna_strana)
     
-    def pridruživanje(p):
-        ime_varijable = p >> T.IME
-        p >> T.JEDNAKO
+
+    # TODO: za ove dvije metode, treba spremiti svaku deklariranu varijablu u memoriju,
+    # zajedno s tipom, tako da parser zna smije li se danoj varijabli pridruzivati ili ne.
+    def pridruživanje(p, ime_varijable):
         # provjera koji nam je tip s lijeve strane (samo formule još dolaze)
-        if rt.mem[ime_varijable][1] ^ T.FORMULA:
+        if ime_varijable.tip_varijable() ^ T.FORMULA:
             vrijednost = p.formula()
         else:
             vrijednost = p.izraz()
@@ -338,8 +343,8 @@ class P(Parser):
 
     def baza(p):
         if elementarni := p >= {T.BROJ, T.IME}: 
-            if elementarni ^ T.BROJ or rt.mem[elementarni] ^ { T.INT, T.NAT }:
-                return elementarni
+            # if elementarni.tip_varijable() ^ { T.INT, T.NAT }:
+            return elementarni
         elif p >> T.O_OTV:
             u_zagradi = p.izraz()
             p >> T.O_ZATV
@@ -520,7 +525,7 @@ class Pridruživanje(AST):
     def izvrši(pridruživanje):
         klasa = type(pridruživanje.varijabla)
         if pridruživanje.varijabla in rt.mem:
-            rt.mem[pridruživanje.varijabla][0] = pridruživanje.vrij.vrijednost()
+            rt.mem[pridruživanje.varijabla] = pridruživanje.vrij.vrijednost()
         else: return rt.mem[pridruživanje.varijabla] #jer ovo vraca bas ono upozorenje koje nam treba
 
 class Deklaracija(AST):
@@ -720,7 +725,24 @@ def shemaA1(f):
         return False
     return lijeva_formula.ispis() == desna_formula.desna.ispis()
     
+ml('''
+    formula f = ($P0 -> $P1);
+    formula g = $P0;
+    formula d = ($P0 -> $P1);
+    int #b = 1;
+    if (f == f) {
+        ispiši << #b << #b;
+    }
+    int #a = #b;
+    nat #r = (3*4)+5;
+    formula c = $P0;
+    ispiši << f << #a << g << d << c;
+    #a = 1;
+    for (i = 1; i < 5; i += 2) ispiši<<i; // for (i = f; ...) javlja grešku
+''')
+
 rt.mem = Memorija()
+
 prikaz(kod := P('''
     formula f = ($P0 -> $P1);
     formula g = $P0;
