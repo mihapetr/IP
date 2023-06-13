@@ -98,6 +98,13 @@ U nastavku izlažemo nekoliko naprednih mogućnosti (ispitivanje svojstava gradi
 
 ### 1. Istinitost formule na (konačnom) modelu
 * **algoritam**: koristiti mogućnost provjere istinitosti na točkovnom modelu za svaki svijet unutar konkretnog modela za kojeg se ispituje istinitost formule
+```
+foreach @svijet {
+    if (~ formula ? @svijet)
+        return F;
+}
+return T;
+```
 
 ### 2. Valjanost formule na (konačnim) modelima
 * **algoritam**: iterativno ili glavni test (istražiti)
