@@ -806,6 +806,10 @@ prikaz(kod := P('''
     ispiši << f << #a << g << d << c;
     #a = 1;
     for (i = 1; i < 5; i += 2) ispiši<<i; // for (i = f; ...) javlja grešku
+    formula a_1 = ($pada_kisa -> $ulice_su_mokre);
+    formula nuzno_a1 = []a_1;
+    a_1 = <>a_1;
+    ispiši << a_1;
 '''))
 kod.izvrši()
 
