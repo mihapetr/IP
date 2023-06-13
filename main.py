@@ -33,11 +33,20 @@ class T(TipoviTokena):
             for pvar in self.činjenice:
                 za_ispis += pvar.sadržaj + ' '
             za_ispis += '} '
-            return self.sadržaj.translate(za_ispis)
+            return za_ispis.translate(subskript)
     class MODEL(Token):
         pvars: 'set(T.PVAR)'
         nosač: 'set(T.SVIJET)'
         def vrijednost(self): return self.sadržaj
+        def ispis(self):
+            za_ispis = self.sadržaj + ' { '
+            for svijet in self.nosač:
+                za_ispis += svijet.sadržaj + ' '
+            za_ispis += '; '
+            for pvar in self.pvars:
+                za_ispis += pvar.sadržaj + ' '
+            za_ispis += '} '
+            return za_ispis.translate(subskript)
         def nađi_svijet(self, naziv): 
             for svijet in self.nosač:
                 if svijet.sadržaj == naziv:
@@ -59,6 +68,7 @@ class T(TipoviTokena):
     MANJE, MMANJE, VEĆE = '<', '<<', '>'
     class BROJ(Token):
         def vrijednost(self): return int(self.sadržaj)
+        def ispis(self): return self.sadržaj
     class IME(Token):
         def vrijednost(self): return rt.mem[self][0]
         def tip_varijable(self): return rt.mem[self][1]
