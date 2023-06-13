@@ -101,6 +101,34 @@ U nastavku izlažemo nekoliko naprednih mogućnosti (ispitivanje svojstava gradi
 
 ### 2. Valjanost formule na (konačnim) modelima
 * **algoritam**: iterativno ili glavni test (istražiti)
+```
+// koristi model naredba
+
+// m = broj varijabli iz modela pomoću foreach
+// n = broj svijetova iz modela pomoću foreach
+
+int bin;
+int temp;
+
+for (int i=0; i<2^(m*n); i++) {
+
+    temp = i;
+
+    foreach $var {
+        foreach @svijet {
+
+            bin = temp % 2;
+
+            if ( bin == 1) $var = | @svijet; 
+            else $var ~| @svijet;
+
+            temp = bin / 2;
+        }
+    }
+
+    // provjera istinitosti formule na modelu
+}
+```
 
 ### 3. Karakteristike relacije dostiživosti
 * *specifična formula* : modalna formula čija valjanost na okviru ovisi o karakteristikama relacije dostiživosti
