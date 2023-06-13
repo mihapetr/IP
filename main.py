@@ -19,6 +19,12 @@ class T(TipoviTokena):
         def ispis(self): return self.sadržaj.translate(subskript)
         def optim1(self): return self
         def vrijednost(self, w): return (self.sadržaj in w.činjenice)
+    class TRUE(Token):
+        literal = "T"
+        def vrijednost(self, w): return True
+    class FALSE(Token):
+        literal = "F"
+        def vrijednost(self, w): return False
     # Tokeni za svijetove i modele
     FORSIRA, NEFORSIRA, VRIJEDI, NEVRIJEDI = '|=', '|~', '=|', '~|'
     class SVIJET(Token):
@@ -186,7 +192,7 @@ def ml(lex):
 # tip -> INT | NAT (ovo je odvojeno iako je pravilo trivijalno jer će biti još tipova s desne strane; vjerojatno ću još od aritmetičkih dodati nat i to će biti dovoljno)
 # pridruživanje -> IME (aritmetičkog tipa) JEDNAKO izraz
 # deklaracija -> tip IME JEDNAKO izraz 
-# formula -> PVAR | NEG formula | DIAMOND formula | BOX formula | O_OTV formula binvez formula O_ZATV 
+# formula -> PVAR | TRUE | FALSE | NEG formula | DIAMOND formula | BOX formula | O_OTV formula binvez formula O_ZATV 
 # binvez -> KONJ | DISJ | KOND | BIKOND
 
 ### DODAO SAM SLJEDEĆA PRAVILA KOJA SU PROIZAŠLA IZ JOSIPOVOG PROŠIRENJA ###
@@ -392,6 +398,7 @@ class P(Parser):
 
     def formula(p):
         if varijabla := p >= {T.PVAR, T.IME}: return varijabla
+        elif konstanta := p >= {T.TRUE, T.FALSE}: return konstanta
         elif p > {T.BOX, T.DIAMOND, T.NEG}:
             klasa, ispod = p.unvez(), p.formula()
             return klasa(ispod)
@@ -593,7 +600,7 @@ class Pridruživanje(AST):
             elif pridruživanje.varijabla.sadržaj[0].islower(): # ovo se odnosi na pridruživanje formulama
                 if pridruživanje.vrij ^ T.IME and not pridruživanje.vrij.sadržaj[0].islower():
                     raise SemantičkaGreška("Greška: nepravilno pridruživanje varijabli formula!")
-                else: rt.mem[pridruživanje.varijabla][0] = pridruživanje.vrij.ispis()
+                else: rt.mem[pridruživanje.varijabla][0] = pridruživanje.vrij
         else: return rt.mem[pridruživanje.varijabla] #jer ovo vraca bas ono upozorenje koje nam treba
 
 class Deklaracija(AST):
@@ -615,7 +622,7 @@ class Deklaracija(AST):
             else: rt.mem[deklaracija.ime] = [deklaracija.vrij.vrijednost(), deklaracija.tip]
         elif deklaracija.tip ^ T.FORMULA: ## ako deklariramo formulu
             if deklaracija.vrij ^ T.IME and not deklaracija.vrij.sadržaj[0].islower(): raise SemantičkaGreška(f'Nepodudaranje tipova prilikom deklaracije formule {deklaracija.ime.sadržaj}!')
-            else: rt.mem[deklaracija.ime] = [deklaracija.vrij.ispis(), deklaracija.tip]
+            else: rt.mem[deklaracija.ime] = [deklaracija.vrij, deklaracija.tip]
         else: raise SemantičkaGreška("Nepodržani tip varijable!") # ne bi smjelo do ovoga doći jer za to imamo provjeru u odg. metodi
 
 class Op(AST):
@@ -738,7 +745,8 @@ class Bikondicional(Binarna):
 class Provjera(AST):
     svijet: T.SVIJET
     ime: 'ime formule'
-    def izvrši(self): return self.ime.vrijednost(self.svijet)
+    def izvrši(self):
+        return self.ime.vrijednost().vrijednost(self.svijet)
 
 class Forsira(AST):
     svijet: T.SVIJET
