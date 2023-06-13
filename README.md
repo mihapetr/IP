@@ -90,8 +90,8 @@ Alternativno:
 
 ## 9. Dodatno (1)
 * provjere istinitosti formule na određenom modelu i svijetu unutar njega (tzv. istinitost na točkovnom modelu) 
-* simbol: **??**
-* način korištenja: **???**
+* simbol: `?`
+* način korištenja: formula ? @svijet
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 U nastavku izlažemo nekoliko naprednih mogućnosti (ispitivanje svojstava gradivnih cjelina Modalne logike - istinitost i valjanost formule, proof-checker, karakteristike relacije dostiživosti) softvera dobivenih uz pomoć gore opisanih funkcionalnosti. 
