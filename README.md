@@ -24,6 +24,8 @@ Projekt iz kolegija ***Interpretacija programa*** u kojem će biti implementiran
 
 ## 4. Funkcije
 * definicija funkcija i funkcijski pozivi. Primjeri funkcija bit će sami algoritmi čiji će izlaz biti važni teorijski rezultati
+* naredba -> FOREACH T.SVIJET blok | FOREACH T.PVAR blok
+* operator koji daje broj svjetova modela M 
 
 ## 5. Tipovi podataka
 ### a) propozicionalna varijabla 
