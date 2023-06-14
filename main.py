@@ -758,8 +758,8 @@ class Provjera(AST):
     ime: 'ime formule'
     def izvrši(self):
         if svijet := rt.mem['using'].nađi_svijet(self.svijet.sadržaj):
-            t = 'vrijedi' if self.ime.vrijednost().vrijednost(svijet) else 'ne vrijedi'
-            print(f'Formula {self.ime.vrijednost().ispis()} {t} na svijetu {svijet.sadržaj}.')
+            t = ' ⊨ ' if self.ime.vrijednost().vrijednost(svijet) else ' ⊭ '
+            print(svijet.sadržaj + t + self.ime.vrijednost().ispis())
         else: raise SemantičkaGreška(f'Svijet {self.svijet.sadržaj} nije deklariran.')
 
 class Forsira(AST):
