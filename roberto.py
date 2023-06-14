@@ -1,7 +1,5 @@
 # korštenje main funkcije importane iz miha_module pozivom: main()
 # jedina funkcija koja se poziva u main.py na kraju skripte
-
-from miha_module import *
 from vepar import *
 import csv
 
@@ -18,7 +16,7 @@ class T(TipoviTokena):
         def optim(self): return self
         def ispis(self): return self.sadržaj.translate(subskript)
         def optim1(self): return self
-        def vrijednost(self, w): return (self.sadržaj in w.činjenice)
+        def vrijednost(self, w): return (self in w.činjenice)
     class TRUE(Token):
         literal = "T"
         def vrijednost(self, w): return True
@@ -67,21 +65,25 @@ class T(TipoviTokena):
         def vrijednost(self): return str(self.sadržaj[1:-1])
     # Tokeni za jezik
     TOČKAZ, ZAREZ, V_OTV, V_ZATV, UPITNIK = ';,{}?'
-    FOR, IF, ELSE, WHILE, ISPIŠI, UNESI, KORISTI = 'for', 'if', 'else', 'while', 'ispiši', 'unesi', 'koristi'
+    FOR, IF, ELSE, WHILE, ISPIŠI, UNESI, KORISTI, FOREACH = 'for', 'if', 'else', 'while', 'ispiši', 'unesi', 'koristi', 'foreach'
     INT, NAT, FORMULA = 'int', 'nat', 'formula'
     JEDNAKO, PLUS,  MINUS, PUTA, NA = '=+-*^'
     JJEDNAKO, PLUSP, PLUSJ, MINUSM, MINUSJ = '==', '++', '+=', '--', '-='
     MANJE, MMANJE, VEĆE = '<', '<<', '>'
     class BROJ(Token):
         def vrijednost(self): return int(self.sadržaj)
-        def ispis(self): return int(self.sadržaj)
+        def ispis(self): return self.sadržaj
     class IME(Token):
         def vrijednost(self): return rt.mem[self][0]
         def tip_varijable(self): return rt.mem[self][1]
-        def ispis(self): 
-            if self.tip_varijable() ^ {T.INT, T.NAT}:
+        def ispis(self):
+            if (len(rt.mem[self]) == 1):
+                return rt.mem[self][0]
+            elif self.tip_varijable() ^ {T.INT, T.NAT}:
                 return self.vrijednost()
-            else: return self.vrijednost().ispis()
+            elif self.tip_varijable() ^ T.FORMULA: 
+                return self.vrijednost().ispis()
+            else: raise SemantičkaGreška("Traženje nepoznate vrijednosti!")
     class CONTINUE(Token):
         literal = 'continue'
         def izvrši(self): raise PrekidContinue
@@ -233,6 +235,11 @@ def ml(lex):
 # ono što radi u ovoj verziji koda. To se odnosi i na metodu ispis() u tokenu T.IME. 
 
 
+### 14.6.2023. ###
+
+# naredba -> FOREACH (SVIJET | PVAR) blok
+
+
 class P(Parser):
     def start(p):
         naredbe = [p.naredba()]
@@ -241,6 +248,7 @@ class P(Parser):
     
     def naredba(p):
         if p > T.FOR: return p.for_petlja()
+        if p > T.FOREACH: return p.foreach_petlja()
         if p > T.ISPIŠI: return p.ispis()
         if p > T.IF: return p.grananje()
         if p > {T.INT, T.NAT, T.FORMULA}: return p.deklaracija()
@@ -258,6 +266,12 @@ class P(Parser):
             p >> T.TOČKAZ
             return cont
         return p.formula()
+    
+    def foreach_petlja(p):
+        p >> T.FOREACH
+        ime = p >> {T.SVIJET, T.PVAR}
+        blok = p.blok()
+        return Foreach_petlja(ime, blok)
 
     def koristi(p):
         p >> T.KORISTI
@@ -350,9 +364,6 @@ class P(Parser):
         desna_strana = p >> {T.IME, T.BROJ}
         return Uvjet(lijeva_strana, op, desna_strana)
     
-
-    # TODO: za ove dvije metode, treba spremiti svaku deklariranu varijablu u memoriju,
-    # zajedno s tipom, tako da parser zna smije li se danoj varijabli pridruzivati ili ne.
     def pridruživanje(p, ime_varijable):
         # provjera koji nam je tip s lijeve strane (samo formule još dolaze)
         if ime_varijable.sadržaj[0] == '#': ## ako pridružujemo aritmetičkom izrazu
@@ -430,7 +441,7 @@ class P(Parser):
         lista_pvar = []
         if p >= T.V_OTV:
             lista_pvar.append(p >> T.PVAR)
-            while p >= ZAREZ: lista_pvar.append(p >> T.PVAR)
+            while p >= T.ZAREZ: lista_pvar.append(p >> T.PVAR)
             p >> T.V_ZATV
         else: lista_pvar.append(p >> T.PVAR)
         p >> T.TOČKAZ
@@ -442,7 +453,7 @@ class P(Parser):
         lista_svijet = []
         if p >= T.V_OTV:
             lista_svijet.append(p >> T.SVIJET)
-            while p >= ZAREZ: lista_pvar.append(p >> T.SVIJET)
+            while p >= T.ZAREZ: lista_svijet.append(p >> T.SVIJET)
             p >> T.V_ZATV
         else: lista_svijet.append(p >> T.SVIJET)
         p >> T.TOČKAZ
@@ -503,6 +514,29 @@ class Unos(AST):
                                 lijevi.sljedbenici.discard(svjetovi[i - 1])
                             else: lijevi.činjenice.discard(pvars[i - 1])
                         else: raise IOError('Neispravna oznaka istinitosti u tablici.')
+
+class Foreach_petlja(AST):
+    ime: '(SVIJET | PVAR)'
+    blok: 'naredba+'
+
+    def izvrši(self):
+        if 'using' not in rt.mem:
+            raise SemantičkaGreška("Potrebno je prvo deklarirati model!")
+        
+        for element in rt.mem['using'].nosač if self.ime ^ T.SVIJET else rt.mem['using'].pvars:
+            try: 
+                if self.ime ^ T.SVIJET:
+                    self.ime.sljedbenici = element.sljedbenici
+                    self.ime.činjenice = element.činjenice
+                    rt.mem['temp'] = self.ime
+                elif self.ime ^ T.PVAR:
+                    rt.mem['temp'] = element
+                else: raise SemantičkaGreška("Nepodržan tip podatka unutar foreach petlje!")
+                self.blok.izvrši()
+            except PrekidBreak: break
+            except PrekidContinue: continue
+        
+        del rt.mem['temp']
                         
 class For_Petlja(AST):
     varijabla: 'IME'
@@ -541,6 +575,8 @@ class For_Petlja(AST):
             if petlja.predznak ^ T.MINUSJ or petlja.predznak ^ T.MINUSM:
                 rt.mem[kv][0] -= prom.vrijednost() if prom else 1
             else: rt.mem[kv][0] += prom.vrijednost() if prom else 1
+        
+        del rt.mem[kv]
 
 class Blok(AST):
     naredbe: 'naredba*'
@@ -555,16 +591,20 @@ class Ispis(AST):
     def izvrši(ispis):
         for varijabla in ispis.varijable:
             if varijabla ^ {T.INT, T.NAT, T.FORMULA, T.BROJ, T.IME}:
-                print(varijabla.ispis(), end = ' ') 
+                if 'temp' in rt.mem:
+                    print(rt.mem['temp'].ispis())
+                else: print(varijabla.ispis(), end = ' ') 
             elif varijabla ^ {T.SVIJET}:
                 if svijet := rt.mem['using'].nađi_svijet(varijabla.sadržaj):
                     print(svijet.ispis())
+                elif 'temp' in rt.mem:
+                    print(rt.mem['temp'].ispis())
                 else: raise SemantičkaGreška(f'Svijet {varijabla.sadržaj} nije deklariran.')
             elif varijabla ^ {T.MODEL}:
                 if rt.mem['using'].sadržaj == varijabla.sadržaj:
                     print(rt.mem['using'].ispis())
                 else: raise SemantičkaGreška(f'Model {varijabla.sadržaj} nije trenutno u uporabi.')
-            else: print("asdasdasdsads")
+            else: raise SemantičkaGreška("Neočekivana varijabla za ispis!")
             ## ovo dobro ispisuje int, nat i formula; PAZI ZA MODEL I SVIJET
 
 class Uvjet(AST):
@@ -635,11 +675,10 @@ class Deklaracija(AST):
                 greska.krivi_tip(deklaracija.ime.sadržaj, tip1, tip2)
             elif not deklaracija.ime.sadržaj[0] == '#': raise SemantičkaGreška("Neispravan naziv varijable aritmetičkog tipa!")
             elif deklaracija.vrij ^ T.IME and not deklaracija.vrij.sadržaj[0] == '#': raise SemantičkaGreška(f'Nepodudaranje tipova prilikom deklaracije aritmetičke varijable {deklaracija.ime.sadržaj}!')
-            else: 
-                rt.mem[deklaracija.ime] = [deklaracija.vrij.vrijednost(), deklaracija.tip]
-                #print(rt.mem[deklaracija.ime])
+            else: rt.mem[deklaracija.ime] = [deklaracija.vrij.vrijednost(), deklaracija.tip]
         elif deklaracija.tip ^ T.FORMULA: ## ako deklariramo formulu
-            if deklaracija.vrij ^ T.IME and not deklaracija.vrij.sadržaj[0].islower(): raise SemantičkaGreška(f'Nepodudaranje tipova prilikom deklaracije formule {deklaracija.ime.sadržaj}!') ### tu postoji jos jedna greska!
+            if deklaracija.vrij ^ T.IME and not deklaracija.vrij.sadržaj[0].islower(): raise SemantičkaGreška(f'Nepodudaranje tipova prilikom deklaracije formule {deklaracija.ime.sadržaj}!')
+            elif not deklaracija.ime.sadržaj.islower() or deklaracija.ime.sadržaj[0] == '#': raise SemantičkaGreška("Neispravan naziv varijable tipa formula!")
             else: rt.mem[deklaracija.ime] = [deklaracija.vrij, deklaracija.tip]
         else: raise SemantičkaGreška("Nepodržani tip varijable!") # ne bi smjelo do ovoga doći jer za to imamo provjeru u odg. metodi
 
@@ -704,7 +743,7 @@ class Diamond(Unarna):
 class Box(Unarna):
     veznik = '■'
     def vrijednost(self, w):
-        for sljedbenik in self.svijet.sljedbenici:
+        for sljedbenik in w.sljedbenici:
             if not self.ispod.vrijednost(sljedbenik): return False
         return True
 
@@ -765,7 +804,7 @@ class Provjera(AST):
     ime: 'ime formule'
     def izvrši(self):
         if svijet := rt.mem['using'].nađi_svijet(self.svijet.sadržaj):
-            t = ' ⊨ ' if self.ime.vrijednost().vrijednost(svijet) else ' ⊭ '
+            t = ' ⊩ ' if self.ime.vrijednost().vrijednost(svijet) else ' ⊮ '
             print(svijet.sadržaj + t + self.ime.vrijednost().ispis())
         else: raise SemantičkaGreška(f'Svijet {self.svijet.sadržaj} nije deklariran.')
 
@@ -823,9 +862,9 @@ def shemaA1(f):
     if not desna_formula ^ Kondicional:
         return False
     return lijeva_formula.ispis() == desna_formula.desna.ispis()
-
-rt.mem = Memorija()
     
+rt.mem = Memorija()
+
 ### ISPOD JE SVE ZA REALIZACIJU KORISNIČKOG UNOSA ###
 
 # u interaktivnom nacinu rada treba omoguciti korisnikov unos u konzolu:
@@ -862,6 +901,4 @@ def unos_programa(ime_txt_dat):
     
     P(naredbe).izvrši() 
 
-unos_programa("program.txt") # da ne moramo stalno u VSC pisati program vec u .txt
-
-
+unos_programa("program2.txt") # da ne moramo stalno u VSC pisati program vec u .txt
