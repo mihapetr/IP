@@ -65,9 +65,9 @@ class T(TipoviTokena):
         def vrijednost(self): return str(self.sadržaj[1:-1])
     # Tokeni za jezik
     TOČKAZ, ZAREZ, V_OTV, V_ZATV, UPITNIK = ';,{}?'
-    FOR, IF, ELSE, WHILE, ISPIŠI, UNESI, KORISTI, FOREACH = 'for', 'if', 'else', 'while', 'ispiši', 'unesi', 'koristi', 'foreach'
+    FOR, IF, ELSE, WHILE, ISPIŠI, UNESI, KORISTI, FOREACH, NR = 'for', 'if', 'else', 'while', 'ispiši', 'unesi', 'koristi', 'foreach', 'nr'
     INT, NAT, FORMULA = 'int', 'nat', 'formula'
-    JEDNAKO, PLUS,  MINUS, PUTA, NA = '=+-*^'
+    JEDNAKO, PLUS, MINUS, PUTA, NA, OSTATAK = '=+-*^%'
     JJEDNAKO, PLUSP, PLUSJ, MINUSM, MINUSJ = '==', '++', '+=', '--', '-='
     MANJE, MMANJE, VEĆE = '<', '<<', '>'
     class BROJ(Token):
@@ -191,7 +191,7 @@ def ml(lex):
 # if_operator -> JJEDNAKO | MANJE | VEĆE  ##NAPOMENA: ovdje nadodati ako zelimo jos nesto u if_operatoru (možda još !=)
 # uvjet -> varijabla | varijabla if_operator varijabla 
 # grananje -> IF O_OTV uvjet O_ZATV blok (ELSE blok)?
-# ispis_varijabla -> IME (aritmetičko) | BROJ
+# ispis_varijabla -> IME (aritmetičko) | BROJ | NR
 # varijable -> '' | varijable MMANJE ispis_varijabla
 # ispis -> ISPIŠI varijable  
 # tip -> INT | NAT (ovo je odvojeno iako je pravilo trivijalno jer će biti još tipova s desne strane; vjerojatno ću još od aritmetičkih dodati nat i to će biti dovoljno)
@@ -345,7 +345,7 @@ class P(Parser):
     def ispis(p):
         p >> T.ISPIŠI
         varijable = []
-        while p >= T.MMANJE: varijable.append(p >> {T.IME, T.BROJ, T.SVIJET, T.MODEL})
+        while p >= T.MMANJE: varijable.append(p >> {T.IME, T.BROJ, T.SVIJET, T.MODEL, T.NR})
         p >> T.TOČKAZ
         return Ispis(varijable)
     
@@ -393,7 +393,7 @@ class P(Parser):
     
     def član(p):
         t = p.faktor()
-        while op := p >= T.PUTA: t = Op(op, t, p.faktor())
+        while op := p >= {T.PUTA, T.OSTATAK}: t = Op(op, t, p.faktor())
         return t
     
     def faktor(p):
@@ -604,6 +604,8 @@ class Ispis(AST):
                 if rt.mem['using'].sadržaj == varijabla.sadržaj:
                     print(rt.mem['using'].ispis())
                 else: raise SemantičkaGreška(f'Model {varijabla.sadržaj} nije trenutno u uporabi.')
+            elif varijabla ^ T.NR:
+                print()
             else: raise SemantičkaGreška("Neočekivana varijabla za ispis!")
             ## ovo dobro ispisuje int, nat i formula; PAZI ZA MODEL I SVIJET
 
@@ -694,12 +696,14 @@ class Op(AST):
         if o ^ T.PLUS: return l + d
         elif o ^ T.MINUS: return l - d
         elif o ^ T.PUTA: return l * d
+        elif o ^ T.OSTATAK: return l % d 
 
 class Potencija(AST):
     baza: 'elementarni | izraz'
     eksponent: 'faktor'
 
     def vrijednost(self):
+        if self.eksponent.vrijednost() < 0: raise SemantičkaGreška(f"Nepodržano potenciranje s negativnim eksponentom {self.eksponent.vrijednost()}!")
         return self.baza.vrijednost() ** self.eksponent.vrijednost()
 
 class Unarna(AST):

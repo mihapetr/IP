@@ -1,23 +1,18 @@
 koristi M { @svijet, @world, @za_warudo, @el_mundo; $pada_kisa, $ulice_su_mokre, $prolazi_cisterna };
 unesi << "rel_dat.mir" << "val_dat.mir";
-int #br = 5;
-ispiši<<5;
-formula a_1 = ($pada_kisa -> $ulice_su_mokre);
-ispiši<<a_1;
-formula nuzno_a1 = []a_1;
-// ispiši << a_1 ? @svijet << a_1 ? @world;
-ispiši << M;
 ispiši<<@world;
-a_1 ? @world;
-@world |~ $ulice_su_mokre;
-ispiši<<@world;
-a_1 ? @world;
-ispiši << @world;
-ispiši << @el_mundo;
 $pada_kisa =| @world;
-a_1 ? @world;
-formula r = <>$ulice_su_mokre;
-ispiši<<r;
-r ? @world;
+ispiši<<@world;
+
+int #a = -10;
+nat #b = 4;
+int #c = (#a % #b) * 11;
+#c = #a ^ #b; //pokusaj s negativnim eksponentom
+ispiši << #c << nr;
+
+for (#i = 0; #i < 10; #i++) {
+ispiši<<#i<<nr;
+}
+
 
 // ispiši << nuzno_a1 ? @el_mundo << nuzno_a1 ? @za_warudo;
