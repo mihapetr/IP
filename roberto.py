@@ -816,9 +816,9 @@ class Forsira(AST):
         if svijet := rt.mem['using'].nađi_svijet(self.svijet.sadržaj):
             for pvar in self.pvars:
                 if self.simbol ^ T.FORSIRA:
-                    svijet.činjenice.add(pvar.sadržaj)
+                    svijet.činjenice.add(pvar)
                 elif self.simbol ^ T.NEFORSIRA: 
-                    svijet.činjenice.discard(pvar.sadržaj)
+                    svijet.činjenice.discard(pvar)
         else: raise SemantičkaGreška(f'Svijet {self.svijet.sadržaj} nije deklariran.')
 
 class Vrijedi(AST):
@@ -829,9 +829,9 @@ class Vrijedi(AST):
         for s in self.svjetovi:
             if svijet := rt.mem['using'].nađi_svijet(s.sadržaj):
                 if self.simbol ^ T.VRIJEDI:
-                    svijet.činjenice.add(self.pvar.sadržaj)
+                    svijet.činjenice.add(self.pvar)
                 elif self.simbol ^ T.NEVRIJEDI:
-                    svijet.činjenice.discard(self.pvar.sadržaj)
+                    svijet.činjenice.discard(self.pvar)
             else: raise SemantičkaGreška(f'Svijet {self.svijet.sadržaj} nije deklariran.')
 
 def optimiziraj(formula):
@@ -901,4 +901,4 @@ def unos_programa(ime_txt_dat):
     
     P(naredbe).izvrši() 
 
-unos_programa("program2.txt") # da ne moramo stalno u VSC pisati program vec u .txt
+unos_programa("program.txt") # da ne moramo stalno u VSC pisati program vec u .txt
