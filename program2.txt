@@ -1,0 +1,16 @@
+koristi M { @svijet, @world, @za_warudo, @el_mundo; $pada_kisa, $ulice_su_mokre, $prolazi_cisterna };
+unesi << "rel_dat.mir" << "val_dat.mir";
+formula f = ($P0->$P1);
+formula q = ($P0->$P1);
+ispiši<<@el_mundo;
+
+foreach $P {
+	q = $P;
+	ispiši<<q;
+}
+
+for (#i = 1; #i < 10; #i++) {
+ispiši<<#i;
+}
+
+foreach @w ispiši<<@w;
