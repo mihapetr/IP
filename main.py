@@ -78,7 +78,10 @@ class T(TipoviTokena):
     class IME(Token):
         def vrijednost(self): return rt.mem[self][0]
         def tip_varijable(self): return rt.mem[self][1]
-        def ispis(self): return self.vrijednost()
+        def ispis(self): 
+            if self.tip_varijable() ^ {T.INT, T.NAT}:
+                return self.vrijednost()
+            else: return self.vrijednost().ispis()
     class CONTINUE(Token):
         literal = 'continue'
         def izvrši(self): raise PrekidContinue
@@ -551,16 +554,17 @@ class Ispis(AST):
 
     def izvrši(ispis):
         for varijabla in ispis.varijable:
-            if varijabla ^ {T.INT, T.NAT, T.FORMULA}:
+            if varijabla ^ {T.INT, T.NAT, T.FORMULA, T.BROJ, T.IME}:
                 print(varijabla.ispis(), end = ' ') 
-            if varijabla ^ {T.SVIJET}:
+            elif varijabla ^ {T.SVIJET}:
                 if svijet := rt.mem['using'].nađi_svijet(varijabla.sadržaj):
                     print(svijet.ispis())
                 else: raise SemantičkaGreška(f'Svijet {varijabla.sadržaj} nije deklariran.')
-            if varijabla ^ {T.MODEL}:
+            elif varijabla ^ {T.MODEL}:
                 if rt.mem['using'].sadržaj == varijabla.sadržaj:
                     print(rt.mem['using'].ispis())
                 else: raise SemantičkaGreška(f'Model {varijabla.sadržaj} nije trenutno u uporabi.')
+            else: raise SemantičkaGreška("Neočekivana varijabla za ispis!")
             ## ovo dobro ispisuje int, nat i formula; PAZI ZA MODEL I SVIJET
 
 class Uvjet(AST):
@@ -629,10 +633,12 @@ class Deklaracija(AST):
                 tip2 = Tip.Z
                 greska = GreskaTipova()
                 greska.krivi_tip(deklaracija.ime.sadržaj, tip1, tip2)
+            elif not deklaracija.ime.sadržaj[0] == '#': raise SemantičkaGreška("Neispravan naziv varijable aritmetičkog tipa!")
             elif deklaracija.vrij ^ T.IME and not deklaracija.vrij.sadržaj[0] == '#': raise SemantičkaGreška(f'Nepodudaranje tipova prilikom deklaracije aritmetičke varijable {deklaracija.ime.sadržaj}!')
             else: rt.mem[deklaracija.ime] = [deklaracija.vrij.vrijednost(), deklaracija.tip]
         elif deklaracija.tip ^ T.FORMULA: ## ako deklariramo formulu
             if deklaracija.vrij ^ T.IME and not deklaracija.vrij.sadržaj[0].islower(): raise SemantičkaGreška(f'Nepodudaranje tipova prilikom deklaracije formule {deklaracija.ime.sadržaj}!')
+            elif not deklaracija.ime.sadržaj.islower() or deklaracija.ime.sadržaj[0] == '#': raise SemantičkaGreška("Neispravan naziv varijable tipa formula!")
             else: rt.mem[deklaracija.ime] = [deklaracija.vrij, deklaracija.tip]
         else: raise SemantičkaGreška("Nepodržani tip varijable!") # ne bi smjelo do ovoga doći jer za to imamo provjeru u odg. metodi
 
@@ -867,7 +873,7 @@ ml('''
 prikaz(kod := P('''
     koristi M { @svijet, @world, @za_warudo, @el_mundo; $pada_kisa, $ulice_su_mokre, $prolazi_cisterna };
     unesi << "rel_dat.mir" << "val_dat.mir";
-    int br = 5;
+    int #br = 5;
     formula a_1 = ($pada_kisa -> $ulice_su_mokre);
     formula nuzno_a1 = []a_1;
     // ispiši << a_1 ? @svijet << a_1 ? @world;
@@ -878,6 +884,8 @@ prikaz(kod := P('''
     ispiši << @world;
     $pada_kisa =| @world;
     a_1 ? @world;
+    formula asda = $P0;
+    ispiši<<a_1 << nuzno_a1 << #br << asda;
     // ispiši << nuzno_a1 ? @el_mundo << nuzno_a1 ? @za_warudo;
 '''), 8)
 kod.izvrši()
