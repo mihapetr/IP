@@ -85,7 +85,7 @@ Alternativno:
 
 ## 8. Komentari
 * jednolinijski
-* početak: `\\`
+* početak: `//`
 
 ## 9. Dodatno (1)
 * provjere istinitosti formule na određenom modelu i svijetu unutar njega (tzv. istinitost na točkovnom modelu) 
@@ -214,4 +214,3 @@ koristi <ime_modela> { @w1, @w2, ..., @wn };
 * Unos iz datoteke se obavlja kao `M << "relacijska_dat.mir" << 'val_datoteka.mir'` (obvezna je uporaba navodnika oko naziva datoteke, mogu biti jednostruki ili dvostruki ali se moraju poklapati)
 * U relacijskoj datoteci mora prvo pisati "rel" (bitno je da su to prva 3 slova, smije pisati i npr. "relacija"), analogno za valuacijsku datoteku gdje mora pisati "val".
 * U valuacijskoj su datoteci svijetovi u stupcu slijeva a prop. varijable u prvom retku, dok su u relacijskoj svjetovi s "lijeve" strane relacije u stupcu slijeva. Oznaka za istinitost relacije odnosno forsiranja smije biti u raznim oblicima: bilo koji string kojem je prvi znak 'T', '1', 'Y', 'I', 'D' ili 'O' se interpretira kao istina, a za 'F', '0', 'N', 'L', 'N' i 'X' je neistina (znakovi ne ovise o velikim i malim slovima).
-* TODO: testirati klasu `Provjera`
