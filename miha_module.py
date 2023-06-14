@@ -1,5 +1,6 @@
 # interaktinvi rad je implementiran izvan okvira programskog jezika
 # šalje parseru blokove koda iza kojih se unese "\n\n"
+from main import *
 
 def main() :
 
@@ -40,16 +41,23 @@ def main() :
             except : print("Greška prilikom otvaranja datoteke. Postoji li?")
             else :
                 # uspješno otvaranje
-                P(f.read()).izvrši() 
+                # print(">", end=" ")
+                try : P(f.read()).izvrši()
+                except Exception as e:
+                    print(e)
                 #print("datoteka: " + f.read())
                 f.close()
+                print("")
         
         # DVOSTRUKI ENTER
         elif line == "" and not block == "" :  # block sadrži odsječak koda
             #print("blok koda:")   
             #print(block)
-            P(block).izvrši() # izvršavamo kod 
+            try : P(block).izvrši() # izvršavamo kod 
+            except Exception as e :
+                print(e)
             block = ""       # reset
+            print("")
 
         # KONKATENACIJA NOVE LINIJE U TRENUTNI BLOK KODA
         elif not line == "" :  # linija koda unesena
@@ -62,3 +70,5 @@ def main() :
         # CATCHALL DEBUG
         else :
             print("nepokriven slučaj!") # za debug; ne bi trebalo doći do toga
+
+main()
