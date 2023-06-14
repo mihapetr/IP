@@ -430,6 +430,7 @@ class P(Parser):
             while p >= ZAREZ: lista_pvar.append(p >> T.PVAR)
             p >> T.V_ZATV
         else: lista_pvar.append(p >> T.PVAR)
+        p >> T.TOČKAZ
         return Forsira(w, lista_pvar, simb)
         
     def vrijedi(p):
@@ -437,10 +438,11 @@ class P(Parser):
         simb = p >> { T.VRIJEDI, T.NEVRIJEDI }
         lista_svijet = []
         if p >= T.V_OTV:
-            lista_pvar.append(p >> T.SVIJET)
+            lista_svijet.append(p >> T.SVIJET)
             while p >= ZAREZ: lista_pvar.append(p >> T.SVIJET)
             p >> T.V_ZATV
-        else: lista_pvar.append(p >> T.SVIJET)
+        else: lista_svijet.append(p >> T.SVIJET)
+        p >> T.TOČKAZ
         return Vrijedi(pvar, lista_svijet, simb)
 
 class Program(AST):
@@ -549,7 +551,8 @@ class Ispis(AST):
 
     def izvrši(ispis):
         for varijabla in ispis.varijable:
-            print(varijabla.ispis(), end = ' ') 
+            if varijabla ^ {T.INT, T.NAT, T.FORMULA}:
+                print(varijabla.ispis(), end = ' ') 
             ## ovo dobro ispisuje int, nat i formula; PAZI ZA MODEL I SVIJET
 
 class Uvjet(AST):
@@ -746,34 +749,36 @@ class Provjera(AST):
     svijet: T.SVIJET
     ime: 'ime formule'
     def izvrši(self):
-        return self.ime.vrijednost().vrijednost(self.svijet)
+        if svijet := rt.mem['using'].nađi_svijet(self.svijet.sadržaj):
+            t = 'vrijedi' if self.ime.vrijednost().vrijednost(svijet) else 'ne vrijedi'
+            print(f'Formula {self.ime.vrijednost().ispis()} {t} na svijetu {svijet.sadržaj}.')
+        else: raise SemantičkaGreška(f'Svijet {self.svijet.sadržaj} nije deklariran.')
 
 class Forsira(AST):
     svijet: T.SVIJET
     pvars: 'list(T.PVAR)'
     simbol: 'T.FORSIRA | T.NEFORSIRA'
     def izvrši(self):
-        if self.svijet not in rt.mem['using'].nosač:
-            raise SemantičkaGreška('Svijet nije deklariran.')
-        for pvar in self.pvars:
-            if self.simbol == T.FORSIRA:
-                self.svijet.činjenice.add(pvar.sadržaj)
-            elif self.simbol == T.NEFORSIRA: 
-                self.svijet.činjenice.discard(pvar.sadržaj)
+        if svijet := rt.mem['using'].nađi_svijet(self.svijet.sadržaj):
+            for pvar in self.pvars:
+                if self.simbol ^ T.FORSIRA:
+                    svijet.činjenice.add(pvar.sadržaj)
+                elif self.simbol ^ T.NEFORSIRA: 
+                    svijet.činjenice.discard(pvar.sadržaj)
+        else: raise SemantičkaGreška(f'Svijet {self.svijet.sadržaj} nije deklariran.')
 
 class Vrijedi(AST):
     pvar: T.PVAR
     svjetovi: 'list(T.SVIJET)'
     simbol: 'T.VRIJEDI | T.NEVRIJEDI'
     def izvrši(self):
-        for svijet in self.svjetovi:
-            if svijet not in rt.mem['using'].nosač:
-                raise SemantičkaGreška('Svijet nije deklariran.')
-            elif self.simbol == T.VRIJEDI:
-                svijet.činjenice.add(self.pvar.sadržaj)
-            elif self.simbol == T.NEVRIJEDI:
-                svijet.činjenice.discard(self.pvar.sadržaj)
-
+        for s in self.svjetovi:
+            if svijet := rt.mem['using'].nađi_svijet(s.sadržaj):
+                if self.simbol ^ T.VRIJEDI:
+                    svijet.činjenice.add(self.pvar.sadržaj)
+                elif self.simbol ^ T.NEVRIJEDI:
+                    svijet.činjenice.discard(self.pvar.sadržaj)
+            else: raise SemantičkaGreška(f'Svijet {self.svijet.sadržaj} nije deklariran.')
 
 def optimiziraj(formula):
     """Pretvara formulu (AST) u formulu koja od veznika ima samo kondicional i negaciju; prije te pretvorbe su još uklonjene dvostruke negacije"""
@@ -858,7 +863,11 @@ prikaz(kod := P('''
     formula a_1 = ($pada_kisa -> $ulice_su_mokre);
     formula nuzno_a1 = []a_1;
     // ispiši << a_1 ? @svijet << a_1 ? @world;
-    //ispiši << M;
+    ispiši << M;
+    a_1 ? @world;
+    @world |~ $ulice_su_mokre;
+    a_1 ? @world;
+    $pada_kisa =| @world;
     a_1 ? @world;
     // ispiši << nuzno_a1 ? @el_mundo << nuzno_a1 ? @za_warudo;
 '''), 8)
