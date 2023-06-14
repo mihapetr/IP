@@ -14,5 +14,6 @@ for (#i = 0; #i < 10; #i++) {
 ispiši<<#i<<nr;
 }
 
+spremi M;
 
 // ispiši << nuzno_a1 ? @el_mundo << nuzno_a1 ? @za_warudo;

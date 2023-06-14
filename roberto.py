@@ -65,7 +65,7 @@ class T(TipoviTokena):
         def vrijednost(self): return str(self.sadržaj[1:-1])
     # Tokeni za jezik
     TOČKAZ, ZAREZ, V_OTV, V_ZATV, UPITNIK = ';,{}?'
-    FOR, IF, ELSE, WHILE, ISPIŠI, UNESI, KORISTI, FOREACH, NR = 'for', 'if', 'else', 'while', 'ispiši', 'unesi', 'koristi', 'foreach', 'nr'
+    FOR, IF, ELSE, WHILE, ISPIŠI, UNESI, KORISTI, FOREACH, NR, SPREMI = 'for', 'if', 'else', 'while', 'ispiši', 'unesi', 'koristi', 'foreach', 'nr', 'spremi'
     INT, NAT, FORMULA = 'int', 'nat', 'formula'
     JEDNAKO, PLUS, MINUS, PUTA, NA, OSTATAK = '=+-*^%'
     JJEDNAKO, PLUSP, PLUSJ, MINUSM, MINUSJ = '==', '++', '+=', '--', '-='
@@ -238,6 +238,7 @@ def ml(lex):
 ### 14.6.2023. ###
 
 # naredba -> FOREACH (SVIJET | PVAR) blok
+# naredba -> SPREMI MODEL TOČKAZ
 
 
 class P(Parser):
@@ -258,6 +259,7 @@ class P(Parser):
         if p > T.SVIJET: return p.forsira()
         if p > T.PVAR: return p.vrijedi()
         if p > T.KORISTI: return p.koristi()
+        if p > T.SPREMI: return p.spremi()
         if p > T.UNESI: return p.unos()
         if br := p >= T.BREAK:
             p >> T.TOČKAZ
@@ -266,6 +268,12 @@ class P(Parser):
             p >> T.TOČKAZ
             return cont
         return p.formula()
+    
+    def spremi(p):
+        p >> T.SPREMI
+        model = p >> T.MODEL
+        p >> T.TOČKAZ
+        return Spremi(model)
     
     def foreach_petlja(p):
         p >> T.FOREACH
@@ -467,6 +475,61 @@ class Program(AST):
             for naredba in program.naredbe: naredba.izvrši()
         except PrekidBreak: raise SemantičkaGreška('Nedozvoljen break izvan petlje!')
         except PrekidContinue: raise SemantičkaGreška('Nedozvoljen continue izvan petlje!')
+
+class Spremi(AST):
+    ime: 'MODEL'
+
+    def izvrši(spremi):
+        if 'using' not in rt.mem:
+            raise SemantičkaGreška("Niste još deklarirali model!")
+        elif spremi.ime.sadržaj != rt.mem['using'].sadržaj:
+            raise SemantičkaGreška(f"Model {spremi.ime.sadržaj} ne postoji! Trenutno deklarirani model je {rt.mem['using'].sadržaj}.")
+        
+        rel_filename = "rel_dat" + spremi.ime.sadržaj + ".mir"
+        val_filename = "val_dat" + spremi.ime.sadržaj + ".mir"
+
+        with open(rel_filename, 'w') as file:
+            row = "rel"
+            for svijet in rt.mem['using'].nosač:
+                f_svijet = svijet.sadržaj
+                f_svijet = f_svijet.replace("@", " ")
+                row += f_svijet
+            file.write(row + '\n')
+
+            row = ""
+            for svijet in rt.mem['using'].nosač:
+                f_svijet = svijet.sadržaj
+                f_svijet = f_svijet.replace("@", "") 
+                row = f_svijet
+                for svijet1 in rt.mem['using'].nosač:
+                    if svijet1 in svijet.sljedbenici:
+                        row += " 1"
+                    else: row += " 0"
+                file.write(row + '\n')
+                row = ""
+
+        with open(val_filename, 'w') as file:
+            row = "valuacija"
+            for cinjenica in rt.mem['using'].pvars:
+                f_cinjenica = cinjenica.sadržaj
+                f_cinjenica = f_cinjenica.replace("$", " ")
+                row += f_cinjenica
+            file.write(row + '\n')
+
+            row = ""
+            for svijet in rt.mem['using'].nosač:
+                f_svijet = svijet.sadržaj
+                f_svijet = f_svijet.replace("@", "") 
+                row = f_svijet
+                for cinjenica in rt.mem['using'].pvars:
+                    if cinjenica in svijet.činjenice:
+                        row += " 1"
+                    else: row += " 0"
+                file.write(row + '\n')
+                row = ""
+
+        print(f"Podaci o relaciji i valuaciji modela {spremi.ime.sadržaj} su spremljeni u datoteke {rel_filename} i {val_filename}.")
+        
 
 class Koristi(AST):
     model: T.MODEL
