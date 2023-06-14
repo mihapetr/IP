@@ -32,9 +32,9 @@ class T(TipoviTokena):
         činjenice: 'set(T.PVAR)'
         def vrijednost(self): return self.sadržaj
         def ispis(self):
-            za_ispis = self.sadržaj + ' { '
+            za_ispis = self.sadržaj + ': {'
             for sljedbenik in self.sljedbenici:
-                za_ispis += sljedbenik.sadržaj + ' '
+                za_ispis += ' ' + sljedbenik.sadržaj
             za_ispis += '; '
             for pvar in self.činjenice:
                 za_ispis += pvar.sadržaj + ' '
@@ -45,9 +45,9 @@ class T(TipoviTokena):
         nosač: 'set(T.SVIJET)'
         def vrijednost(self): return self.sadržaj
         def ispis(self):
-            za_ispis = self.sadržaj + ' { '
+            za_ispis = self.sadržaj + ': {'
             for svijet in self.nosač:
-                za_ispis += svijet.sadržaj + ' '
+                za_ispis += ' ' + svijet.sadržaj
             za_ispis += '; '
             for pvar in self.pvars:
                 za_ispis += pvar.sadržaj + ' '
@@ -553,6 +553,14 @@ class Ispis(AST):
         for varijabla in ispis.varijable:
             if varijabla ^ {T.INT, T.NAT, T.FORMULA}:
                 print(varijabla.ispis(), end = ' ') 
+            if varijabla ^ {T.SVIJET}:
+                if svijet := rt.mem['using'].nađi_svijet(varijabla.sadržaj):
+                    print(svijet.ispis())
+                else: raise SemantičkaGreška(f'Svijet {varijabla.sadržaj} nije deklariran.')
+            if varijabla ^ {T.MODEL}:
+                if rt.mem['using'].sadržaj == varijabla.sadržaj:
+                    print(rt.mem['using'].ispis())
+                else: raise SemantičkaGreška(f'Model {varijabla.sadržaj} nije trenutno u uporabi.')
             ## ovo dobro ispisuje int, nat i formula; PAZI ZA MODEL I SVIJET
 
 class Uvjet(AST):
@@ -867,6 +875,7 @@ prikaz(kod := P('''
     a_1 ? @world;
     @world |~ $ulice_su_mokre;
     a_1 ? @world;
+    ispiši << @world;
     $pada_kisa =| @world;
     a_1 ? @world;
     // ispiši << nuzno_a1 ? @el_mundo << nuzno_a1 ? @za_warudo;
