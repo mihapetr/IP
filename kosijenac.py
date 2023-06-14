@@ -15,14 +15,17 @@ class T(TipoviTokena):
         def ispis(self): return self.sadržaj.translate(subskript)
         def optim1(self): return self
         def vrijednost(self, w): return (self in w.činjenice)
+        def pozovi(self): return self
     class TRUE(Token):
         literal = "T"
         def vrijednost(self, w): return True
         def ispis(self): return self.literal
+        def pozovi(self): return self
     class FALSE(Token):
         literal = "F"
         def vrijednost(self, w): return False
         def ispis(self): return self.literal
+        def pozovi(self): return self
     # Tokeni za svijetove i modele
     FORSIRA, NEFORSIRA, VRIJEDI, NEVRIJEDI = '|=', '|~', '=|', '~|'
     class SVIJET(Token):
@@ -75,8 +78,9 @@ class T(TipoviTokena):
         def vrijednost(self): return int(self.sadržaj)
         def ispis(self): return self.sadržaj
     class IME(Token):
-        def vrijednost(self): return rt.mem[self][0] if rt.mem['fun'] == '__main__' else rt.lm[rt.mem['fun']][self][0]
-        def tip_varijable(self): return rt.mem[self][1] if rt.mem['fun'] == '__main__' else rt.lm[rt.mem['fun']][self][1]
+        def vrijednost(self):
+            return rt.mem[self][0] if fun == '__main__' else rt.lm[fun][self][0]
+        def tip_varijable(self): return rt.mem[self][1] if fun == '__main__' else rt.lm[fun][self][1]
         def ispis(self): 
             if self.tip_varijable() ^ {T.INT, T.NAT}:
                 return self.vrijednost()
@@ -177,8 +181,8 @@ def ml(lex):
 
 ### BKG ###
 # start -> naredbe naredba
-# naredbe -> '' | naredbe naredba
-# naredba -> petlja | grananje | ispis TOČKAZ | pridruživanje TOČKAZ | deklaracija TOČKAZ | BREAK TOČKAZ | CONTINUE TOČKAZ | funkcija
+# naredbe -> '' | naredbe naredba | naredbe funkcija
+# naredba -> petlja | grananje | ispis TOČKAZ | pridruživanje TOČKAZ | deklaracija TOČKAZ | BREAK TOČKAZ | CONTINUE TOČKAZ
 # funkcija -> FUN IMEF O_OTV parametri? O_ZATV blok
 # parametri -> tip IME | parametri ZAREZ tip IME
 # for_operator -> MANJE | VEĆE ##NAPOMENA: ovdje nadodati ako zelimo jos nesto u for_operatoru (možda još !=)
@@ -206,8 +210,10 @@ def ml(lex):
 ### DODAO SAM SLJEDEĆA PRAVILA KOJA SU PROIZAŠLA IZ JOSIPOVOG PROŠIRENJA ###
 ### kasnije ćemo ih dodati gore - ovdje sam ih stavio samo da bude vidljivo što sam napravio ###
 # formula -> IME (formule)
+# formula -> IMEF O_OTV vrijednosti? O_ZATV
+# vrijednosti -> IME
 # pridruživanje -> IME (formule) JEDNAKO IME (formule)
-# deklaracija -> FORMULA IME JEDNAKO formula 
+# deklaracija -> FORMULA IME JEDNAKO formula
 # ispis_varijabla -> IME (formula)
 # uvjet -> IME (formule) JJEDNAKO IME (formule)
 
@@ -240,8 +246,13 @@ def ml(lex):
 
 class P(Parser):
     def start(p):
+        p.funkcije = Memorija(redefinicija=False)
         naredbe = [p.naredba()]
-        while not p > KRAJ: naredbe.append(p.naredba())
+        while not p > KRAJ:
+            if p >= T.FUN:
+                funkcija = p.funkcija()
+                p.funkcije[funkcija.ime] = funkcija
+            naredbe.append(p.naredba())
         return Program(naredbe)
     
     def naredba(p):
@@ -256,7 +267,7 @@ class P(Parser):
         if p > T.PVAR: return p.vrijedi()
         if p > T.KORISTI: return p.koristi()
         if p > T.UNESI: return p.unos()
-        if p > T.FUN: return p.funkcija()
+        if p >= T.VRATI: return Vrati(p.formula())
         if br := p >= T.BREAK:
             p >> T.TOČKAZ
             return br
@@ -298,14 +309,13 @@ class P(Parser):
         return Unos(datoteke)
 
     def funkcija(p):
-        p >> T.FUN
         ime_funkcije = p >> T.IMEF
         p >> T.O_OTV
         parametri = []
         if param_tip := p >= { T.INT, T.NAT, T.FORMULA }:
             param_ime = p >> T.IME
             parametri.append([param_ime, param_tip])
-        while p >> T.ZAREZ: parametri.append([p >> { T.INT, T.NAT, T.FORMULA }, p >> T.IME])
+        while p >= T.ZAREZ: parametri.append([p >> { T.INT, T.NAT, T.FORMULA }, p >> T.IME])
         p >> T.O_ZATV
         return Funkcija(ime_funkcije, parametri, p.blok())
 
@@ -368,9 +378,6 @@ class P(Parser):
         desna_strana = p >> {T.IME, T.BROJ, T.SVIJET}
         return Uvjet(lijeva_strana, op, desna_strana)
     
-
-    # TODO: za ove dvije metode, treba spremiti svaku deklariranu varijablu u memoriju,
-    # zajedno s tipom, tako da parser zna smije li se danoj varijabli pridruzivati ili ne.
     def pridruživanje(p, ime_varijable):
         # provjera koji nam je tip s lijeve strane (samo formule još dolaze)
         if ime_varijable.sadržaj[0] == '#': ## ako pridružujemo aritmetičkom izrazu
@@ -423,10 +430,17 @@ class P(Parser):
         elif p > {T.BOX, T.DIAMOND, T.NEG}:
             klasa, ispod = p.unvez(), p.formula()
             return klasa(ispod)
-        elif p >> T.O_OTV:
+        elif p >= T.O_OTV:
             l, klasa, d = p.formula(), p.binvez(), p.formula()
             p >> T.O_ZATV
             return klasa(l, d)
+        elif ime_funkcije := p >= T.IMEF:
+            vrijednosti = []
+            p >> T.O_OTV
+            if arg := p >= T.IME: vrijednosti.append(arg)
+            while p >= T.ZAREZ: vrijednosti.append(p >> T.IME)
+            p >> T.O_ZATV
+            return Poziv(p.funkcije[ime_funkcije], vrijednosti)
         raise SintaksnaGreška('Nepoznata naredba')
         
     def unvez(p):
@@ -470,7 +484,6 @@ class Program(AST):
     naredbe: 'barem jedna naredba'
 
     def izvrši(program):
-        rt.mem['fun'] = '__main__'
         try:
             for naredba in program.naredbe: naredba.izvrši()
         except PrekidBreak: raise SemantičkaGreška('Nedozvoljen break izvan petlje!')
@@ -522,7 +535,7 @@ class Unos(AST):
                                 lijevi.sljedbenici.discard(svjetovi[i - 1])
                             else: lijevi.činjenice.discard(pvars[i - 1])
                         else: raise IOError('Neispravna oznaka istinitosti u tablici.')
- 
+
 class Funkcija(AST):
     ime: 'T.IMEF'
     parametri: '[IME, TIP]*'
@@ -530,16 +543,25 @@ class Funkcija(AST):
     def pozovi(self, vrijednosti):
         if len(vrijednosti) != len(self.parametri):
             raise GreškaIzvođenja(f'{self.ime} mora primiti {len(self.parametri)} parametara!')
-        rt.mem['fun'] = self.ime
+        fun = self.ime
         rt.lm[self.ime] = Memorija()
         for i in range(len(vrijednosti)):
             Deklaracija(self.parametri[i][1], self.parametri[i][0], vrijednosti[i]).izvrši()
-        ret = nenavedeno
+        ret = T.FALSE
         try: self.blok.izvrši()
         except Povratak as exc: ret = exc.preneseno
         del rt.lm[self.ime]
-        rt.mem['fun'] = '__main__'
+        fun = '__main__'
         return ret
+
+class Poziv(AST):
+    funkcija: 'Funkcija'
+    vrijednosti: 'IME*'
+    def pozovi(self): return self.funkcija.pozovi([arg.vrijednost() for arg in self.vrijednosti])
+
+class Vrati(AST):
+    povratna_vrij: 'formula'
+    def izvrši(self): raise Povratak(self.povratna_vrij.pozovi())
 
 class For_Petlja(AST):
     varijabla: 'IME'
@@ -563,7 +585,7 @@ class For_Petlja(AST):
         elif petlja.promjena ^ T.IME and petlja.promjena.sadržaj[0] != '#':
             raise neadekvatna_desna_strana 
         
-        memo = rt.mem if rt.mem['fun'] == '__main__' else rt.lm[rt.mem['fun']]
+        memo = rt.mem if fun == '__main__' else rt.lm[fun]
         memo[kv] = [petlja.početak.vrijednost()] # NAPOMENA: ovdje ime moze biti bilo koje i ne mora biti deklarirano (vidjet sta ako neko unese formulu npr.); vidi jel stvara probleme
         while memo[kv][0] < petlja.granica.vrijednost() if petlja.operator ^ T.MANJE else memo[kv][0] > petlja.granica.vrijednost():
             try:
@@ -646,7 +668,7 @@ class Pridruživanje(AST):
     vrij: '(varijabla | BROJ)'
 
     def izvrši(pridruživanje):
-        memo = rt.mem if rt.mem['fun'] == '__main__' else rt.lm[rt.mem['fun']]
+        memo = rt.mem if fun == '__main__' else rt.lm[fun]
         if pridruživanje.varijabla in memo:
             if pridruživanje.varijabla.sadržaj[0] == '#': # ovo se odnosi na pridruživanje aritmetičkim varijablama (int, nat)
                 if pridruživanje.vrij ^ T.IME and pridruživanje.vrij.sadržaj[0] != '#':
@@ -658,7 +680,7 @@ class Pridruživanje(AST):
             elif pridruživanje.varijabla.sadržaj[0].islower(): # ovo se odnosi na pridruživanje formulama
                 if pridruživanje.vrij ^ T.IME and not pridruživanje.vrij.sadržaj[0].islower():
                     raise SemantičkaGreška("Greška: nepravilno pridruživanje varijabli formula!")
-                else: memo[pridruživanje.varijabla][0] = pridruživanje.vrij
+                else: memo[pridruživanje.varijabla][0] = pridruživanje.vrij.pozovi()
         else: return memo[pridruživanje.varijabla] #jer ovo vraca bas ono upozorenje koje nam treba
 
 class Deklaracija(AST):
@@ -668,22 +690,25 @@ class Deklaracija(AST):
 
     # prilikom deklaracije, kljucevi se preslikavaju u listu s dva elementa (par): vrijednost, tip
     def izvrši(deklaracija):
-        memo = rt.mem if rt.mem['fun'] == '__main__' else rt.lm[rt.mem['fun']]
+        memo = rt.mem if fun == '__main__' else rt.lm[fun]
         if deklaracija.ime in memo: ## ako se dogodila redeklaracija
             raise deklaracija.ime.redeklaracija()
         elif deklaracija.tip ^ {T.NAT, T.INT}: ## ako deklariramo aritmeticki tip
-            if deklaracija.tip ^ T.NAT and deklaracija.vrij.vrijednost() < 0: 
+            if deklaracija.tip ^ T.NAT and deklaracija.vrij.vrijednost() < 0:
                 tip1 = Tip.N
                 tip2 = Tip.Z
                 greska = GreskaTipova()
                 greska.krivi_tip(deklaracija.ime.sadržaj, tip1, tip2)
             elif not deklaracija.ime.sadržaj[0] == '#': raise SemantičkaGreška("Neispravan naziv varijable aritmetičkog tipa!")
-            elif deklaracija.vrij ^ T.IME and not deklaracija.vrij.sadržaj[0] == '#': raise SemantičkaGreška(f'Nepodudaranje tipova prilikom deklaracije aritmetičke varijable {deklaracija.ime.sadržaj}!')
+            elif deklaracija.vrij ^ T.IME and not deklaracija.vrij.sadržaj[0] == '#': 
+                raise SemantičkaGreška(f'Nepodudaranje tipova prilikom deklaracije aritmetičke varijable {deklaracija.ime.sadržaj}!')
             else: memo[deklaracija.ime] = [deklaracija.vrij.vrijednost(), deklaracija.tip]
         elif deklaracija.tip ^ T.FORMULA: ## ako deklariramo formulu
-            if deklaracija.vrij ^ T.IME and not deklaracija.vrij.sadržaj[0].islower(): raise SemantičkaGreška(f'Nepodudaranje tipova prilikom deklaracije formule {deklaracija.ime.sadržaj}!')
-            elif not deklaracija.ime.sadržaj.islower() or deklaracija.ime.sadržaj[0] == '#': raise SemantičkaGreška("Neispravan naziv varijable tipa formula!")
-            else: memo[deklaracija.ime] = [deklaracija.vrij, deklaracija.tip]
+            if deklaracija.vrij ^ T.IME and not deklaracija.vrij.sadržaj[0].islower(): 
+                raise SemantičkaGreška(f'Nepodudaranje tipova prilikom deklaracije formule {deklaracija.ime.sadržaj}!')
+            elif not deklaracija.ime.sadržaj.islower() or deklaracija.ime.sadržaj[0] == '#': 
+                raise SemantičkaGreška("Neispravan naziv varijable tipa formula!")
+            else: memo[deklaracija.ime] = [deklaracija.vrij.pozovi(), deklaracija.tip]
         else: raise SemantičkaGreška("Nepodržani tip varijable!") # ne bi smjelo do ovoga doći jer za to imamo provjeru u odg. metodi
 
 class Op(AST):
@@ -732,6 +757,8 @@ class Unarna(AST):
     #provjeri ovo
     def izvrši(self):
         return self.ispis()
+
+    def pozovi(self): return self
 
 class Negacija(Unarna):
     veznik = '¬'
@@ -787,6 +814,8 @@ class Binarna(AST):
     def izvrši(self):
         return self.ispis()
 
+    def pozovi(self): return self
+
 class Disjunkcija(Binarna):
     veznik = '∨'
     def vrijednost(self, w): return self.lijevo.vrijednost(w) or self.desno.vrijednost(w)
@@ -824,9 +853,9 @@ class Forsira(AST):
         if svijet := rt.mem['using'].nađi_svijet(self.svijet.sadržaj):
             for pvar in self.pvars:
                 if self.simbol ^ T.FORSIRA:
-                    svijet.činjenice.add(pvar.sadržaj)
+                    svijet.činjenice.add(pvar)
                 elif self.simbol ^ T.NEFORSIRA: 
-                    svijet.činjenice.discard(pvar.sadržaj)
+                    svijet.činjenice.discard(pvar)
         else: raise SemantičkaGreška(f'Svijet {self.svijet.sadržaj} nije deklariran.')
 
 class Vrijedi(AST):
@@ -837,9 +866,9 @@ class Vrijedi(AST):
         for s in self.svjetovi:
             if svijet := rt.mem['using'].nađi_svijet(s.sadržaj):
                 if self.simbol ^ T.VRIJEDI:
-                    svijet.činjenice.add(self.pvar.sadržaj)
+                    svijet.činjenice.add(self.pvar)
                 elif self.simbol ^ T.NEVRIJEDI:
-                    svijet.činjenice.discard(self.pvar.sadržaj)
+                    svijet.činjenice.discard(self.pvar)
             else: raise SemantičkaGreška(f'Svijet {self.svijet.sadržaj} nije deklariran.')
 
 def optimiziraj(formula):
@@ -888,6 +917,7 @@ def shemaA1(f):
 # ''')
 
 rt.mem = Memorija()
+fun = '__main__'
 rt.lm = Memorija()
 
 # prikaz(kod := P('''
@@ -932,21 +962,28 @@ prikaz(kod := P('''
     // ispiši << a_1 ? @svijet << a_1 ? @world;
     ispiši << M;
     a_1 ? @world;
+    ispiši << @world;
     @world |~ $ulice_su_mokre;
     a_1 ? @world;
     ispiši << @world;
     $pada_kisa =| @world;
+    ispiši << @world;
     a_1 ? @world;
     formula asda = $P0;
     formula r = <>$ulice_su_mokre;
     formula ul = $ulice_su_mokre;
     ispiši << @el_mundo;
+    fun _pr(int #a, formula f) {
+        ispiši << @world;
+        f ? @world;
+    }
     ul ? @world;
     ul ? @el_mundo;
     if (r ? @world) ispiši << @za_warudo;
-    formula k = T;
+    formula k = _pr(#br, a_1);
     formula l = []k;
-    ispiši<<a_1 << nuzno_a1 << #br << asda << k << l;
+    k ? @world;
+    //ispiši << @world;
     // ispiši << nuzno_a1 ? @el_mundo << nuzno_a1 ? @za_warudo;
 '''), 8)
 kod.izvrši()
