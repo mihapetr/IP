@@ -1,8 +1,0 @@
-koristi M { @svijet, @world, @za_warudo, @el_mundo; $pada_kisa, $ulice_su_mokre, $prolazi_cisterna };
-unesi << "rel_dat.mir" << "val_dat.mir";
-
-formula f1 = ~$pada_kisa;
-formula g1 = []f1;
-formula h1 = ($pada_kisa -> g1);
-
-if (h1 ? @world) ispiši << 1;
