@@ -848,6 +848,7 @@ class Poziv_funkcije(AST):
 
         kopija_memorije = rt.mem
         lokalna_memorija = Memorija()
+        lokalna_memorija["using"] = rt.mem["using"]
 
         i = 0
         j = 0
@@ -1490,4 +1491,6 @@ def main():
             pass
 
 
-main()
+unos_programa("program2.mir")
+
+# main()
