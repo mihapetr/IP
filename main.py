@@ -183,7 +183,6 @@ class T(TipoviTokena):
             raise PrekidBreak
 
 
-# donje dvije klase sluze samo za lijepo ispisivanje poruke prilikom nekompatibilnih tipova
 class Tip(enum.Enum):
     N = "NAT"
     Z = "INT"
@@ -262,7 +261,7 @@ def ml(lex):
             lex >> "/"
             lex - "\n"
             lex.zanemari()
-        elif znak == '÷':
+        elif znak == "÷":
             yield lex.token(T.DIJ)
         elif znak == "#":
             lex >> str.isalpha
@@ -295,80 +294,58 @@ def ml(lex):
             yield lex.literal(T)
 
 
-### BKG ###
+############ *** BKG *** ############
+
 # start -> naredbe naredba
 # naredbe -> '' | naredbe naredba | naredbe funkcija
-# naredba -> petlja | grananje | ispis TOČKAZ | pridruživanje TOČKAZ | deklaracija TOČKAZ | BREAK TOČKAZ | CONTINUE TOČKAZ
+# naredba -> petlja | grananje | pridruživanje TOČKAZ | deklaracija TOČKAZ | BREAK TOČKAZ | CONTINUE TOČKAZ
+# naredba -> ispis TOČKAZ | unos TOČKAZ | forsira TOČKAZ | vrijedi TOČKAZ | provjera TOČKAZ | koristi TOČKAZ
+# naredba -> SPREMI MODEL TOČKAZ | poziv_funkcije TOČKAZ | vrati TOČKAZ | TOČKAZ
+
 # funkcija -> FUN IMEF O_OTV parametri? O_ZATV blok
 # parametri -> tip IME | parametri ZAREZ tip IME
-# for_operator -> MANJE | VEĆE ##NAPOMENA: ovdje nadodati ako zelimo jos nesto u for_operatoru (možda još !=)
+# poziv_funkcije -> IMEF O_OTV IME* O_ZATV
+# vrati -> VRATI (TRUE | FALSE) TOČKAZ
+
+# petlja -> for blok | FOREACH (SVIJET | PVAR) blok
+# for -> FOR O_OTV IME# JEDNAKO izraz TOČKAZ IME# for_operator izraz TOČKAZ IME# promjena O_ZATV
+# for_operator -> MANJE | VEĆE
+# blok -> V_OTV naredbe V_ZATV | naredba
+
 # izraz -> član | izraz (PLUS|MINUS) član
 # član -> faktor | član PUTA faktor | član DIJ faktor | član OSTATAK faktor
 # faktor -> baza | baza NA faktor | MINUS faktor
 # baza -> BROJ | IME(aritmetičkog tipa) | O_OTV izraz O_ZATV
 # promjena -> PLUSP | MINUSM | PLUSJ izraz | MINUSJ izraz
-# for -> FOR O_OTV IME# JEDNAKO izraz TOČKAZ IME# for_operator izraz TOČKAZ IME# promjena O_ZATV
-# blok -> V_OTV naredbe V_ZATV | naredba
-# petlja -> for blok
 # varijabla -> IME | BROJ
-# if_operator -> JJEDNAKO | MANJE | VEĆE  ##NAPOMENA: ovdje nadodati ako zelimo jos nesto u if_operatoru (možda još !=)
-# uvjet -> varijabla | varijabla if_operator varijabla
+
 # grananje -> IF O_OTV uvjet O_ZATV blok (ELSE blok)?
-# ispis_varijabla -> IME (aritmetičko) | BROJ | NR
-# varijable -> '' | varijable MMANJE ispis_varijabla
+# uvjet -> varijabla | varijabla if_operator varijabla | IME (formule) JJEDNAKO IME (formule) | provjera
+# if_operator -> JJEDNAKO | MANJE | VEĆE
+# provjera -> formula UPITNIK SVIJET
+
 # ispis -> ISPIŠI varijable
-# tip -> INT | NAT | FORMULA (ovo je odvojeno iako je pravilo trivijalno jer će biti još tipova s desne strane; vjerojatno ću još od aritmetičkih dodati nat i to će biti dovoljno)
+# varijable -> '' | varijable MMANJE ispis_varijabla
+# ispis_varijabla -> IME | BROJ | NR
+
+# tip -> INT | NAT | FORMULA
 # pridruživanje -> IME (aritmetičkog tipa) JEDNAKO izraz
-# deklaracija -> tip IME JEDNAKO izraz
-# formula -> PVAR | TRUE | FALSE | NEG formula | DIAMOND formula | BOX formula | O_OTV formula binvez formula O_ZATV
+# pridruživanje -> IME (formule) JEDNAKO IME (formule) | IME (formule) JEDNAKO poziv_funkcije
+# deklaracija -> tip (formule) IME JEDNAKO formula | tip (aritm.) IME JEDNAKO izraz
+
+# formula -> PVAR | TRUE | FALSE | IME (formule)
+# formula -> NEG formula | DIAMOND formula | BOX formula | O_OTV formula binvez formula O_ZATV
 # binvez -> KONJ | DISJ | KOND | BIKOND
 
-### DODAO SAM SLJEDEĆA PRAVILA KOJA SU PROIZAŠLA IZ JOSIPOVOG PROŠIRENJA ###
-### kasnije ćemo ih dodati gore - ovdje sam ih stavio samo da bude vidljivo što sam napravio ###
-# formula -> IME (formule)
-# formula -> IMEF O_OTV vrijednosti? O_ZATV
-# vrijednosti -> IME
-# pridruživanje -> IME (formule) JEDNAKO IME (formule)
-# deklaracija -> FORMULA IME JEDNAKO formula
-# ispis_varijabla -> IME (formula)
-# uvjet -> IME (formule) JJEDNAKO IME (formule)
-
-# NAPOMENA (1): uočiti da formule možemo ispisivati samo ako su unutar neke varijable te isto tako
-# u if_uvjetu možemo uspoređivati varijable koje predstavljaju neke formule. Dakle, jezik ne
-# podržava nešto poput ispiši << ($P0 -> #P1); ili if (($P0 -> #P1) == ($P0 -> #P1)) ... Vjerojatno
-# smo trebali za ime formule uvesti poseban token IMEF, ali sada je vjerojatno kasno za sve to
-
-### OSTATAK PRAVILA KOJA TREBA DODATI U PARSER I ZA NJIH ODGOVARAJUĆE AST-ove ###
-# naredba -> unos TOČKAZ | forsira TOČKAZ | vrijedi TOČKAZ | provjera TOČKAZ | koristi TOČKAZ | TOČKAZ
+# forsira -> SVIJET (FORSIRA | NEFORSIRA) PVAR | SVIJET (FORSIRA | NEFORSIRA) V_OTV lista_pvar V_ZATV
 # lista_pvar -> PVAR | PVAR ZAREZ lista_pvar
-# forsira -> SVIJET (FORSIRA | NEFORSIRA) V_OTV lista_pvar V_ZATV
-# forsira -> SVIJET (FORSIRA | NEFORSIRA) PVAR
+
+# vrijedi -> PVAR (VRIJEDI | NEVRIJEDI) SVIJET | PVAR (VRIJEDI | NEVRIJEDI) V_OTV lista_svijet V_ZATV
 # lista_svijet -> SVIJET | SVIJET ZAREZ lista_svijet
-# vrijedi -> PVAR (VRIJEDI | NEVRIJEDI) V_OTV lista_svijet V_ZATV
-# vrijedi -> PVAR (VRIJEDI | NEVRIJEDI) SVIJET
-# provjera -> formula UPITNIK SVIJET
+
 # koristi -> KORISTI MODEL V_OTV lista_svijet TOČKAZ lista_pvar V_ZATV
-# unos -> MODEL (MMANJE IMED)+
-
-# NAPOMENA (2): uočiti da su gornja pravila neovisna o svemu dosad implementiranom. Nema nikakvih
-# višeznačnosti te je dovoljno dodavati elif-ove u metodu naredba() u parseru te nakon toga
-# kreirati potrebne metode i AST-ove. Također, ne znam jesi li mijenjao klasu T pa malo pogledaj
-# je li sve kako treba biti (verzija je sinocnji merge)
-
-# NAPOMENA (3): uočiti da nisam mijenjao AST-ove vezane uz formule, iako si ih ti promijenio. Kada
-# budeš to ažurirao, samo neka metoda ispis() bude i dalje pod tim imenom te da i dalje radi
-# ono što radi u ovoj verziji koda. To se odnosi i na metodu ispis() u tokenu T.IME.
-
-
-### 14.6.2023. ###
-
-# naredba -> FOREACH (SVIJET | PVAR) blok
-# naredba -> SPREMI MODEL TOČKAZ
-# poziv_funkcije -> IMEF O_OTV IME* O_ZATV
-# pridruživanje -> IME (formule) JEDNAKO poziv_funkcije TOČKAZ
-# naredba -> poziv_funkcije TOČKAZ
-# naredba -> vrati TOČKAZ
-# vrati -> VRATI (TRUE | FALSE) TOČKAZ
+# unos -> MODEL lista_datoteka
+# lista_datoteka -> '' | lista_datoteka MMANJE IMED
 
 
 class P(Parser):
@@ -522,7 +499,7 @@ class P(Parser):
         p >> T.FOR, p >> T.O_OTV
         i = p >> T.IME
         p >> T.JEDNAKO
-        početak = p.izraz()  ## u AST for_petlja pazimo ako se vrati ime formule
+        početak = p.izraz()
         p >> T.TOČKAZ
 
         if (p >> T.IME) != i:
@@ -530,8 +507,8 @@ class P(Parser):
         for_operator = p >> {
             T.MANJE,
             T.VEĆE,
-        }  # ovdje se lako doda ako hocemo podrzati jos neke operatore
-        granica = p.izraz()  ## u AST for_petlja pazimo ako se vrati ime formule
+        }
+        granica = p.izraz()
         p >> T.TOČKAZ
 
         if (p >> T.IME) != i:
@@ -539,7 +516,7 @@ class P(Parser):
         if minus_ili_plus := p >= {T.PLUSP, T.MINUSM}:
             promjena = nenavedeno
         elif minus_ili_plus := p >> {T.PLUSJ, T.MINUSJ}:
-            promjena = p.izraz()  ## u AST for_petlja pazimo ako se vrati ime formule
+            promjena = p.izraz()
         p >> T.O_ZATV
 
         blok = p.blok()
@@ -547,7 +524,6 @@ class P(Parser):
             i, početak, for_operator, granica, promjena, minus_ili_plus, blok
         )
 
-    # blok može biti ili jedna naredba ili {naredbe*} !!!
     def blok(p):
         naredbe = []
         if p >= T.V_OTV:
@@ -583,13 +559,12 @@ class P(Parser):
         return Uvjet(lijeva_strana, op, desna_strana)
 
     def pridruživanje(p, ime_varijable):
-        # provjera koji nam je tip s lijeve strane (samo formule još dolaze)
-        if ime_varijable.sadržaj[0] == "#":  ## ako pridružujemo aritmetičkom izrazu
+        if ime_varijable.sadržaj[0] == "#":
             vrijednost = p.izraz()
         elif ime_varijable.sadržaj[0].islower() and p > T.IMEF:
             vrijednost = p.poziv_funkcije()
             return Pridruživanje(ime_varijable, vrijednost)
-        elif ime_varijable.sadržaj[0].islower():  ## ako pridružujemo formuli
+        elif ime_varijable.sadržaj[0].islower():
             vrijednost = p.formula()
         else:
             raise SintaksnaGreška(
@@ -603,12 +578,12 @@ class P(Parser):
             T.INT,
             T.NAT,
             T.FORMULA,
-        }  # kad budemo imali vise tipova, onda cemo imati p > {T.INT, T.FORMULA...}
+        }
         ime = p >> T.IME
         p >> T.JEDNAKO
-        if tip ^ {T.INT, T.NAT}:  ## ako deklariramo aritmetički izraz
+        if tip ^ {T.INT, T.NAT}:
             vrij = p.izraz()
-        elif tip ^ T.FORMULA:  ## ako deklariramo varijablu
+        elif tip ^ T.FORMULA:
             vrij = p.formula()
         else:
             raise SintaksnaGreška(f"Za tip {tip} nije podržana deklaracija!")
@@ -975,7 +950,6 @@ class For_Petlja(AST):
         )
         kv = petlja.varijabla
 
-        # donja tri uvjeta provjeravaju da se s desne strane ne nađe formula
         if petlja.početak ^ T.IME and petlja.početak.sadržaj[0] != "#":
             raise neadekvatna_desna_strana
         elif petlja.granica ^ T.IME and petlja.granica.sadržaj[0] != "#":
@@ -1071,7 +1045,6 @@ class Uvjet(AST):
             else:
                 raise SemantičkaGreška("Nepodržan operator na tipu formula!")
 
-        # ovo ispod bez problema prolazi za aritmetičke vrijednosti s lijeve i desne strane
         if uvjet.operator ^ T.JJEDNAKO:
             return uvjet.lijeva.vrijednost() == uvjet.desna.vrijednost()
         elif uvjet.operator ^ T.VEĆE:
@@ -1105,9 +1078,7 @@ class Pridruživanje(AST):
             memo[pridruživanje.varijabla][0] = rt.lm["return"]
             return
         if pridruživanje.varijabla in memo:
-            if (
-                pridruživanje.varijabla.sadržaj[0] == "#"
-            ):  # ovo se odnosi na pridruživanje aritmetičkim varijablama (int, nat)
+            if pridruživanje.varijabla.sadržaj[0] == "#":
                 if pridruživanje.vrij ^ T.IME and pridruživanje.vrij.sadržaj[0] != "#":
                     raise SemantičkaGreška(
                         "Greška: nepravilno pridruživanje aritmetičkoj varijabli!"
@@ -1120,9 +1091,7 @@ class Pridruživanje(AST):
                     greska.krivi_tip(pridruživanje.varijabla.sadržaj, Tip.N, Tip.Z)
                 else:
                     memo[pridruživanje.varijabla][0] = pridruživanje.vrij.vrijednost()
-            elif pridruživanje.varijabla.sadržaj[
-                0
-            ].islower():  # ovo se odnosi na pridruživanje formulama
+            elif pridruživanje.varijabla.sadržaj[0].islower():
                 if (
                     pridruživanje.vrij ^ T.IME
                     and not pridruživanje.vrij.sadržaj[0].islower()
@@ -1133,9 +1102,7 @@ class Pridruživanje(AST):
                 else:
                     memo[pridruživanje.varijabla][0] = pridruživanje.vrij.pozovi()
         else:
-            return memo[
-                pridruživanje.varijabla
-            ]  # jer ovo vraca bas ono upozorenje koje nam treba
+            return memo[pridruživanje.varijabla]
 
 
 class Deklaracija(AST):
@@ -1143,12 +1110,11 @@ class Deklaracija(AST):
     ime: "IME"
     vrij: "varijabla | BROJ"
 
-    # prilikom deklaracije, kljucevi se preslikavaju u listu s dva elementa (par): vrijednost, tip
     def izvrši(deklaracija):
         memo = rt.mem if fun == "__main__" else rt.lm[fun]
-        if deklaracija.ime in memo:  ## ako se dogodila redeklaracija
+        if deklaracija.ime in memo:
             raise deklaracija.ime.redeklaracija()
-        elif deklaracija.tip ^ {T.NAT, T.INT}:  ## ako deklariramo aritmeticki tip
+        elif deklaracija.tip ^ {T.NAT, T.INT}:
             if deklaracija.tip ^ T.NAT and deklaracija.vrij.vrijednost() < 0:
                 tip1 = Tip.N
                 tip2 = Tip.Z
@@ -1162,7 +1128,7 @@ class Deklaracija(AST):
                 )
             else:
                 memo[deklaracija.ime] = [deklaracija.vrij.vrijednost(), deklaracija.tip]
-        elif deklaracija.tip ^ T.FORMULA:  ## ako deklariramo formulu
+        elif deklaracija.tip ^ T.FORMULA:
             if deklaracija.vrij ^ T.IME and not deklaracija.vrij.sadržaj[0].islower():
                 raise SemantičkaGreška(
                     f"Nepodudaranje tipova prilikom deklaracije formule {deklaracija.ime.sadržaj}!"
@@ -1175,9 +1141,7 @@ class Deklaracija(AST):
             else:
                 memo[deklaracija.ime] = [deklaracija.vrij.pozovi(), deklaracija.tip]
         else:
-            raise SemantičkaGreška(
-                "Nepodržani tip varijable!"
-            )  # ne bi smjelo do ovoga doći jer za to imamo provjeru u odg. metodi
+            raise SemantičkaGreška("Nepodržani tip varijable!")
 
 
 class Op(AST):
@@ -1200,7 +1164,7 @@ class Op(AST):
         elif o ^ T.OSTATAK:
             return l % d
         elif o ^ T.DIJ:
-            return int (l / d)
+            return int(l / d)
 
 
 class Potencija(AST):
@@ -1242,7 +1206,6 @@ class Unarna(AST):
     def ispis(self):
         return self.veznik + self.ispod.ispis()
 
-    # provjeri ovo
     def izvrši(self):
         return self.ispis()
 
@@ -1312,7 +1275,6 @@ class Binarna(AST):
     def ispis(self):
         return "(" + self.lijevo.ispis() + self.veznik + self.desno.ispis() + ")"
 
-    # provjeri ovo
     def izvrši(self):
         return self.ispis()
 
@@ -1405,15 +1367,9 @@ class Vrijedi(AST):
 def optimiziraj(formula):
     """Pretvara formulu (AST) u formulu koja od veznika ima samo kondicional i negaciju; prije te pretvorbe su još uklonjene dvostruke negacije"""
 
-    nova = (
-        formula.optim()
-    )  # prije optimizacije da dobijemo samo negaciju i kondicional uklanjamo redundantne negacije
-    nova = (
-        nova.optim1()
-    )  # kreiramo ekvivalentnu formulu koja ima samo negaciju, kondicional i box od veznika
-    return (
-        nova.optim()
-    )  # nakon dobivanja ekvivalentne formule opet se mogu javiti redundantne negacije pa ih zato još jednom mičemo
+    nova = formula.optim()
+    nova = nova.optim1()
+    return nova.optim()
 
 
 def jednaki(f1, f2):
@@ -1447,12 +1403,6 @@ rt.fje = Memorija(redefinicija=False)
 ### ISPOD JE SVE ZA REALIZACIJU KORISNIČKOG UNOSA ###
 
 
-# u interaktivnom nacinu rada treba omoguciti korisnikov unos u konzolu:
-# PROVJERI_DOKAZ dokaz.txt (npr.) nakon cega se poziva unos_dokaza(dokaz.txt)
-# sve formule su spremljene u varijablama fi, i = 1, ..., k gdje je k broj
-# formula u dokazu. Uočiti: za vrijeme interkativnog rada nakon učitavanja
-# datoteke u kojem se nalazi dokaz te varijable više nisu "slobodne" za
-# deklaraciju!!
 def unos_dokaza(ime_txt_dat):
     with open(ime_txt_dat, "r") as file:
         lines = file.readlines()
@@ -1470,9 +1420,6 @@ def unos_dokaza(ime_txt_dat):
     P(naredbe).izvrši()
 
 
-# u interaktivnom nacinu rada omoguciti unos programa koji je natipkan u
-# nekoj .txt datoteci. Ako je program napisan u program.txt, onda se
-# poziva s unos_programa("program.txt")
 def unos_programa(ime_txt_dat):
     with open(ime_txt_dat, "r") as file:
         lines = file.readlines()
@@ -1483,13 +1430,10 @@ def unos_programa(ime_txt_dat):
     P(naredbe).izvrši()
 
 
-# unos_programa("program.txt") # da ne moramo stalno u VSC pisati program vec u .txt
-
 ######################### interaktivni način rada ###############################
 
 
 def main():
-    # ispis uputa
     print(10 * "-" + " MODALNA LOGIKA " + 10 * "-")
     print("Naredbe završavaju znakom ';'.")
     print("Za izvršavanje unesenog bloka dvaput pritisnite Enter.")
@@ -1499,21 +1443,17 @@ def main():
 
     block = ""
     while True:
-        print(
-            ">", end=" "
-        )  # ispisuje oznaku da smo unutar naše ljuske bez prelaska u novi red
+        print(">", end=" ")
         line = ""
-        line = input()  # čeka input korisnika
+        line = input()
 
-        # IZLAZ IZ PROGRAMA
-        if line in {"bye", "exit"}:  # kraj rada
+        if line in {"bye", "exit"}:
             exit()
 
-        # NAPRAVI SKRIPTU
         elif line[:7] == "napravi":
-            block = ""  # resetira do sad uneseno
+            block = ""
             s = line.split(" ")
-            script = s[1]  # drugi element je naziv datoteke
+            script = s[1]
 
             if not script[-4:] == ".mir":
                 print("Tip datoteke mora biti .mir!")
@@ -1523,41 +1463,31 @@ def main():
                 print("Previše argumenata! Koristiti: napravi <ime_datoteke>.mir")
                 continue
 
-            # print("izvršavam skriptu " + script)
             try:
                 f = open(script, "r")
             except:
                 print("Greška prilikom otvaranja datoteke. Postoji li?")
             else:
-                # uspješno otvaranje
-                # print(">", end=" ")
                 try:
                     P(f.read()).izvrši()
                 except Exception as e:
                     print(e)
-                # print("datoteka: " + f.read())
                 f.close()
                 print("")
 
-        # DVOSTRUKI ENTER
-        elif line == "" and not block == "":  # block sadrži odsječak koda
-            # print("blok koda:")
-            # print(block)
+        elif line == "" and not block == "":
             try:
-                P(block).izvrši()  # izvršavamo kod
+                P(block).izvrši()
             except Exception as e:
                 print(e)
-            block = ""  # reset
+            block = ""
             print("")
 
-        # KONKATENACIJA NOVE LINIJE U TRENUTNI BLOK KODA
-        elif not line == "":  # linija koda unesena
+        elif not line == "":
             block += line + "\n"
 
-        # NEBTINI PRELASCI U NOVI RED
         elif line == "":
-            pass  # ignoriramo bezvezno unošenje novih redova
+            pass
 
 
-# unos_programa("program5.txt")
 main()
