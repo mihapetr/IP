@@ -1,0 +1,12 @@
+koristi M { @svijet, @world, @za_warudo, @el_mundo; $pada_kisa, $ulice_su_mokre, $prolazi_cisterna };
+unesi << "rel_dat.mir" << "val_dat.mir";
+formula dobar = T;
+foreach @tmp {
+    ispiši << @tmp << nr;
+    
+    if (ciklus ? @tmp) continue;
+    else {
+        dobar = F;
+        break;
+    }
+}

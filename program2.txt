@@ -1,18 +1,8 @@
 koristi M { @svijet, @world, @za_warudo, @el_mundo; $pada_kisa, $ulice_su_mokre, $prolazi_cisterna };
 unesi << "rel_dat.mir" << "val_dat.mir";
-formula f = ($P0->$P1);
-formula q = ($P0->$P1);
 
-ispiši << M;
+formula f1 = ~$pada_kisa;
+formula g1 = []f1;
+formula h1 = ($pada_kisa -> g1);
 
-for (#i = 1; #i < 10; #i++) {
-ispiši<<#i;
-}
-ispiši<<nr;
-
-foreach $P {
-	q = $P;
-	ispiši << q;
-}
-
-foreach @w ispiši<<@w;
+if (h1 ? @world) ispiši << 1;
