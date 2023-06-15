@@ -1,7 +1,6 @@
-# korštenje main funkcije importane iz miha_module pozivom: main()
-# jedina funkcija koja se poziva u main.py na kraju skripte
 from vepar import *
 import csv
+import copy
 
 subskript = str.maketrans('0123456789', '₀₁₂₃₄₅₆₇₈₉')
 class PrekidBreak(NelokalnaKontrolaToka): """Signal koji šalje naredba break."""
@@ -90,7 +89,11 @@ class T(TipoviTokena):
                 return self.vrijednost()
             elif self.tip_varijable() ^ T.FORMULA: 
                 return self.vrijednost().ispis()
-            else: raise SemantičkaGreška("Traženje nepoznate vrijednosti!")
+            elif len(rt.mem[self]) == 2: 
+                return rt.mem[self][0].ispis()
+            elif len(rt.mem[self]) == 3:
+                return rt.mem[self][0]
+            else: raise SemantičkaGreška("Traženje nepoznatog sadržaja!")
     class IMEF(IME):
         def ispis(self): return self.sadržaj
     class CONTINUE(Token):
@@ -101,7 +104,6 @@ class T(TipoviTokena):
         def izvrši(self): raise PrekidBreak
 
 # donje dvije klase sluze samo za lijepo ispisivanje poruke prilikom nekompatibilnih tipova
-# napravio sam to tako da se lako moze prosirivati kada nove tipove budemo ubacivali
 class Tip(enum.Enum):
     N = 'NAT'
     Z = 'INT'
@@ -214,8 +216,6 @@ def ml(lex):
 # formula -> PVAR | TRUE | FALSE | NEG formula | DIAMOND formula | BOX formula | O_OTV formula binvez formula O_ZATV 
 # binvez -> KONJ | DISJ | KOND | BIKOND
 
-### DODAO SAM SLJEDEĆA PRAVILA KOJA SU PROIZAŠLA IZ JOSIPOVOG PROŠIRENJA ###
-### kasnije ćemo ih dodati gore - ovdje sam ih stavio samo da bude vidljivo što sam napravio ###
 # formula -> IME (formule)
 # formula -> IMEF O_OTV vrijednosti? O_ZATV
 # vrijednosti -> IME
@@ -224,12 +224,6 @@ def ml(lex):
 # ispis_varijabla -> IME (formula)
 # uvjet -> IME (formule) JJEDNAKO IME (formule)
 
-# NAPOMENA (1): uočiti da formule možemo ispisivati samo ako su unutar neke varijable te isto tako
-# u if_uvjetu možemo uspoređivati varijable koje predstavljaju neke formule. Dakle, jezik ne
-# podržava nešto poput ispiši << ($P0 -> #P1); ili if (($P0 -> #P1) == ($P0 -> #P1)) ... Vjerojatno
-# smo trebali za ime formule uvesti poseban token IMEF, ali sada je vjerojatno kasno za sve to
-
-### OSTATAK PRAVILA KOJA TREBA DODATI U PARSER I ZA NJIH ODGOVARAJUĆE AST-ove ###
 # naredba -> unos TOČKAZ | forsira TOČKAZ | vrijedi TOČKAZ | provjera TOČKAZ | koristi TOČKAZ | TOČKAZ
 # lista_pvar -> PVAR | PVAR ZAREZ lista_pvar
 # forsira -> SVIJET (FORSIRA | NEFORSIRA) V_OTV lista_pvar V_ZATV 
@@ -239,27 +233,19 @@ def ml(lex):
 # vrijedi -> PVAR (VRIJEDI | NEVRIJEDI) SVIJET
 # provjera -> formula UPITNIK SVIJET
 # koristi -> KORISTI MODEL V_OTV lista_svijet TOČKAZ lista_pvar V_ZATV
-# unos -> MODEL (MMANJE IMED)+
-
-# NAPOMENA (2): uočiti da su gornja pravila neovisna o svemu dosad implementiranom. Nema nikakvih 
-# višeznačnosti te je dovoljno dodavati elif-ove u metodu naredba() u parseru te nakon toga
-# kreirati potrebne metode i AST-ove. Također, ne znam jesi li mijenjao klasu T pa malo pogledaj
-# je li sve kako treba biti (verzija je sinocnji merge)
-
-# NAPOMENA (3): uočiti da nisam mijenjao AST-ove vezane uz formule, iako si ih ti promijenio. Kada
-# budeš to ažurirao, samo neka metoda ispis() bude i dalje pod tim imenom te da i dalje radi
-# ono što radi u ovoj verziji koda. To se odnosi i na metodu ispis() u tokenu T.IME. 
-
-
-### 14.6.2023. ###
+# unos -> MODEL (MMANJE IMED)+ 
 
 # naredba -> FOREACH (SVIJET | PVAR) blok
 # naredba -> SPREMI MODEL TOČKAZ
+# poziv_funkcije -> IMEF O_OTV IME* O_ZATV 
+# pridruživanje -> IME (formule) JEDNAKO poziv_funkcije TOČKAZ
+# naredba -> poziv_funkcije TOČKAZ
+# naredba -> vrati TOČKAZ
+# vrati -> VRATI (TRUE | FALSE) TOČKAZ
 
 
 class P(Parser):
     def start(p):
-        # p.funkcije = Memorija(redefinicija=False) # mozda treba prije kod inicijalizacije glavne memorije??!
         naredbe = [p.naredba()]
         while not p > KRAJ:
             naredbe.append(p.naredba())
@@ -279,9 +265,9 @@ class P(Parser):
         if p > T.KORISTI: return p.koristi()
         if p > T.SPREMI: return p.spremi()
         if p > T.UNESI: return p.unos()
+        if p > T.VRATI: return p.vrati_konstantu()
         if p > T.FUN: return p.deklaracija_funkcije()
         if p > T.IMEF: return p.poziv_funkcije()
-        if p >= T.VRATI: return Vrati(p.formula())
         if br := p >= T.BREAK:
             p >> T.TOČKAZ
             return br
@@ -316,6 +302,11 @@ class P(Parser):
         p >> T.TOČKAZ
         return Poziv_funkcije(ime, argumenti)
 
+    def vrati_konstantu(p):
+        p >> T.VRATI
+        konst = p >> {T.FALSE, T.TRUE}
+        p >> T.TOČKAZ
+        return Vrati_konstantu(konst)
 
     def spremi(p):
         p >> T.SPREMI
@@ -382,7 +373,7 @@ class P(Parser):
         kriva_varijabla = SemantičkaGreška('Sva tri dijela for-petlje moraju imati istu varijablu')
         
         p >> T.FOR, p >> T.O_OTV
-        i = p >> T.IME #NAPOMENA: mozda ovdje ipak stavit uvjet da ime mora imati # kao prvi znak
+        i = p >> T.IME 
         p >> T.JEDNAKO
         početak = p.izraz() ## u AST for_petlja pazimo ako se vrati ime formule
         p >> T.TOČKAZ
@@ -428,22 +419,22 @@ class P(Parser):
     
     def uvjet(p):
         lijeva_strana = p >> {T.IME, T.BROJ}
-        op = p >> {T.JJEDNAKO, T.MANJE, T.VEĆE, T.UPITNIK} #ovdje se dodaju if_operatori ako zelimo prosiriti
+        op = p >> {T.JJEDNAKO, T.MANJE, T.VEĆE, T.UPITNIK} 
         desna_strana = p >> {T.IME, T.BROJ, T.SVIJET}
         return Uvjet(lijeva_strana, op, desna_strana)
     
-    # nadogradi da s desne strane moze doci funkcija
     def pridruživanje(p, ime_varijable):
-        # provjera koji nam je tip s lijeve strane (samo formule još dolaze)
         if ime_varijable.sadržaj[0] == '#': ## ako pridružujemo aritmetičkom izrazu
             vrijednost = p.izraz()
+        elif ime_varijable.sadržaj[0].islower() and p > T.IMEF:
+            vrijednost = p.poziv_funkcije()
+            return Pridruživanje(ime_varijable, vrijednost)
         elif ime_varijable.sadržaj[0].islower(): ## ako pridružujemo formuli
             vrijednost = p.formula()
         else: raise SintaksnaGreška(f"Pridruživanje nije podržano za varijablu {ime_varijable.sadržaj}")
         p >> T.TOČKAZ
         return Pridruživanje(ime_varijable, vrijednost)
     
-    # nadogradi da s desne strane moze doci funkcija
     def deklaracija(p):
         tip = p >> {T.INT, T.NAT, T.FORMULA} #kad budemo imali vise tipova, onda cemo imati p > {T.INT, T.FORMULA...}
         ime = p >> T.IME
@@ -490,13 +481,6 @@ class P(Parser):
             l, klasa, d = p.formula(), p.binvez(), p.formula()
             p >> T.O_ZATV
             return klasa(l, d)
-        elif ime_funkcije := p >= T.IMEF:
-            vrijednosti = []
-            p >> T.O_OTV
-            if arg := p >= T.IME: vrijednosti.append(arg)
-            while p >= T.ZAREZ: vrijednosti.append(p >> T.IME)
-            p >> T.O_ZATV
-            return Poziv(p.funkcije[ime_funkcije], vrijednosti)
         raise SintaksnaGreška('Nepoznata naredba')
         
     def unvez(p):
@@ -646,6 +630,12 @@ class Unos(AST):
                             else: lijevi.činjenice.discard(pvars[i - 1])
                         else: raise IOError('Neispravna oznaka istinitosti u tablici.')
 
+class Vrati_konstantu(AST):
+    konstanta: 'FALSE|TRUE'
+
+    def izvrši(self):
+        rt.lm['return'] = self.konstanta
+
 class Deklaracija_funkcije(AST):
     ime: 'T.IMEF'
     parametri: '[IME, TIP]*'
@@ -653,7 +643,6 @@ class Deklaracija_funkcije(AST):
 
     def izvrši(dekl_fje):
         rt.fje[dekl_fje.ime] = Funkcija(dekl_fje.ime, dekl_fje.parametri, dekl_fje.blok)
-        # print(rt.fje[dekl_fje.ime])
 
 class Poziv_funkcije(AST):
     ime: 'IMEF'
@@ -674,27 +663,30 @@ class Poziv_funkcije(AST):
             j = 0
             for argument in fja.argumenti:
                 if i == j: 
-                    #print(rt.mem[argument])
+                    if parametar[1] == Token(T.FORMULA):
+                        if argument.sadržaj[0] == '#' or not argument.sadržaj[0].islower():
+                            raise GreškaIzvođenja(f'{fja.ime} nije dobila kompatibilne parametre!')
+                    elif parametar[1] == Token(T.INT) or parametar[1] == Token(T.NAT) :
+                        if not argument.sadržaj[0] == '#':
+                            raise GreškaIzvođenja(f'{fja.ime} nije dobila kompatibilne parametre!')
+                    
                     lokalna_memorija[parametar[0]] = rt.mem[argument]
+                    lokalna_memorija[parametar[0]] = copy.deepcopy(lokalna_memorija[parametar[0]])
+
+                    if lokalna_memorija[parametar[0]][1] == Token(T.INT) or lokalna_memorija[parametar[0]][1] == Token(T.NAT):
+                        lokalna_memorija[parametar[0]].append(".")
                     break
                 j += 1
             i += 1
             
-        #print("Prije")
-        #for eleme in rt.mem:
-        #   print(eleme)
+        
         rt.mem = lokalna_memorija
-        #print("kasnije")
-        #for eleme in rt.mem:
-        #    print(eleme)
 
-        povratna_vrijednost = rt.fje[fja.ime].izvrši(fja.argumenti)
+
+        rt.fje[fja.ime].izvrši(fja.argumenti)
 
         del rt.mem
         rt.mem = kopija_memorije
-        #print("Nakon")
-        #for eleme in rt.mem:
-        #    print(eleme)
 
 class Funkcija(AST):
     ime: 'T.IMEF'
@@ -706,8 +698,6 @@ class Funkcija(AST):
             raise GreškaIzvođenja(f'{self.ime} mora primiti {len(self.parametri)} parametara!')
 
         self.blok.izvrši()
-
-        return 1
 
 class Foreach_petlja(AST):
     ime: '(SVIJET | PVAR)'
@@ -735,14 +725,13 @@ class Foreach_petlja(AST):
 class For_Petlja(AST):
     varijabla: 'IME'
     početak: 'izraz'
-    operator: '(<|>)' #mogli bi bit još podržani <= ili >=, ali nije da time dobivamo na ekspresivnosti jezika; eventualno dodati !=
+    operator: '(<|>)' 
     granica: 'izraz'
     promjena: 'izraz?'
     predznak: '(+|-)'
     blok: 'naredba*'
 
     def izvrši(petlja):
-        # je formula s desne strane semantička ili sintaksna greška?
         neadekvatna_desna_strana = SemantičkaGreška("Greška: nad formulama nisu definirane aritmetičke operacije!")
         kv = petlja.varijabla
         
@@ -755,12 +744,12 @@ class For_Petlja(AST):
             raise neadekvatna_desna_strana 
         
         memo = rt.mem if fun == '__main__' else rt.lm[fun]
-        memo[kv] = [petlja.početak.vrijednost()] # NAPOMENA: ovdje ime moze biti bilo koje i ne mora biti deklarirano (vidjet sta ako neko unese formulu npr.); vidi jel stvara probleme
+        memo[kv] = [petlja.početak.vrijednost()] 
         while memo[kv][0] < petlja.granica.vrijednost() if petlja.operator ^ T.MANJE else memo[kv][0] > petlja.granica.vrijednost():
             try:
                 petlja.blok.izvrši()
             except PrekidBreak: break
-            except PrekidContinue: #nazalost dupliciram kod radi ispravnog rada continue, kasnije mozemo popraviti
+            except PrekidContinue: 
                 prom = petlja.promjena
                 if petlja.predznak ^ T.MINUSJ or petlja.predznak ^ T.MINUSM:
                     memo[kv][0] -= prom.vrijednost() if prom else 1
@@ -801,15 +790,13 @@ class Ispis(AST):
             elif varijabla ^ T.NR:
                 print()
             else: raise SemantičkaGreška("Neočekivana varijabla za ispis!")
-            ## ovo dobro ispisuje int, nat i formula; PAZI ZA MODEL I SVIJET
 
 class Uvjet(AST):
     lijeva: '(IME|BROJ)'
     operator: '(==|<|>|?)'
     desna: '(IME|BROJ)'
 
-    def ispunjen(uvjet): # NAPOMENA: možda ovo dolje moze ostati i za tip formula (iako je glupo, bolje za njih samo ==, ali lako promijenimo sto zelimo); ponovno: definirati metodu vrijednost za formulu na koji nacin vec zelimo
-        # ovo ispod prolazi za formule i s jedne i druge strane
+    def ispunjen(uvjet): 
         if uvjet.lijeva ^ T.IME and uvjet.lijeva.sadržaj[0].islower():
             if uvjet.operator ^ T.JJEDNAKO:
                 if uvjet.desna ^ T.IME and not uvjet.desna.sadržaj[0].islower():
@@ -841,10 +828,14 @@ class Grananje(AST):
 
 class Pridruživanje(AST):
     varijabla: 'IME'
-    vrij: '(varijabla | BROJ)'
+    vrij: '(varijabla | BROJ | poziv funkcije)'
 
     def izvrši(pridruživanje):
         memo = rt.mem if fun == '__main__' else rt.lm[fun]
+        if isinstance(pridruživanje.vrij, Poziv_funkcije): 
+            pridruživanje.vrij.izvrši()
+            memo[pridruživanje.varijabla][0] = rt.lm['return']
+            return
         if pridruživanje.varijabla in memo:
             if pridruživanje.varijabla.sadržaj[0] == '#': # ovo se odnosi na pridruživanje aritmetičkim varijablama (int, nat)
                 if pridruživanje.vrij ^ T.IME and pridruživanje.vrij.sadržaj[0] != '#':
@@ -1065,7 +1056,6 @@ def jednaki(f1, f2):
     return f1 == f2
 
 # provjerava je li formula f shema aksioma A1
-# NISAM TESTIRAO jer još nemamo implementiranu varijablu tipa formula
 def shemaA1(f):
     optimiziraj(f)
     f.ispis()
@@ -1086,28 +1076,6 @@ rt.fje = Memorija(redefinicija=False)
 
 ### ISPOD JE SVE ZA REALIZACIJU KORISNIČKOG UNOSA ###
 
-# u interaktivnom nacinu rada treba omoguciti korisnikov unos u konzolu:
-# PROVJERI_DOKAZ dokaz.txt (npr.) nakon cega se poziva unos_dokaza(dokaz.txt)
-# sve formule su spremljene u varijablama fi, i = 1, ..., k gdje je k broj
-# formula u dokazu. Uočiti: za vrijeme interkativnog rada nakon učitavanja
-# datoteke u kojem se nalazi dokaz te varijable više nisu "slobodne" za 
-# deklaraciju!!
-def unos_dokaza(ime_txt_dat):
-    with open(ime_txt_dat, 'r') as file:
-        lines = file.readlines()
-
-    i = 1
-    formule = []
-    for line in lines:
-        formule.append('formula f' + str(i) + " = " + line)
-        i += 1
-
-    naredbe = ""    
-    for line in formule:
-        naredbe += line
-
-    P(naredbe).izvrši() 
-
 # u interaktivnom nacinu rada omoguciti unos programa koji je natipkan u 
 # nekoj .txt datoteci. Ako je program napisan u program.txt, onda se 
 # poziva s unos_programa("program.txt")
@@ -1120,7 +1088,6 @@ def unos_programa(ime_txt_dat):
     
     P(naredbe).izvrši() 
 
-# unos_programa("program.txt") # da ne moramo stalno u VSC pisati program vec u .txt
 
 ######################### interaktivni način rada ###############################
 
@@ -1189,4 +1156,4 @@ def main() :
         elif line == "" :
             pass    # ignoriramo bezvezno unošenje novih redova
 
-unos_programa("program4.txt")
+unos_programa("program5.txt")

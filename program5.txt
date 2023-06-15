@@ -1,0 +1,23 @@
+int #c = 3;
+int #p = 2;
+ispiši<<#c << #p;
+formula a = $P0;
+fun _a(int #b) {
+#b = 2;
+formula a = $P0;
+ispiši<<a; 
+ispiši<<#b<<nr;
+formula d = T;
+vrati F;
+}
+
+_a(#c);
+formula z = T;
+
+ispiši<<#c << nr;
+for (#i = 1; #i < 5; #i++) ispiši<<#i;
+
+z = _a(#c);
+ispiši<<z<<nr;
+
+vrati T;
