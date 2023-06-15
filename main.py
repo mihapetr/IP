@@ -1140,49 +1140,6 @@ def main() :
         elif line == "" :
             pass    # ignoriramo bezvezno unošenje novih redova
 
-# ml('''
-#     koristi M { @svijet, @world, @za_warudo, @el_mundo; $pada_kisa, $ulice_su_mokre, $prolazi_cisterna };
-#     M << "rel_dat.mir" << "val_dat.mir";
-#     int br = 5;
-#     formula a_1 = ($pada_kisa -> $ulice_su_mokre);
-#     formula nuzno_a1 = []a_1;
-#     // ispiši << a_1 ? @svijet << a_1 ? @world;
-#     ispiši << M;
-#     a_1 ? @world;
-#     // ispiši << nuzno_a1 ? @el_mundo << nuzno_a1 ? @za_warudo;
-# ''')
 
-prikaz(kod := P('''
-    koristi M { @svijet, @world, @za_warudo, @el_mundo; $pada_kisa, $ulice_su_mokre, $prolazi_cisterna };
-    unesi << "rel_dat.mir" << "val_dat.mir";
-    int #br = 5;
-    formula a_1 = ($pada_kisa -> $ulice_su_mokre);
-    formula nuzno_a1 = []a_1;
-    // ispiši << a_1 ? @svijet << a_1 ? @world;
-    ispiši << M;
-    a_1 ? @world;
-    ispiši << @world;
-    @world |~ $ulice_su_mokre;
-    a_1 ? @world;
-    ispiši << @world;
-    $pada_kisa =| @world;
-    ispiši << @world;
-    a_1 ? @world;
-    formula asda = $P0;
-    formula r = <>$ulice_su_mokre;
-    formula ul = $ulice_su_mokre;
-    ispiši << @el_mundo;
-    fun _pr(int #a, formula f) {
-        ispiši << @world;
-        f ? @world;
-    }
-    ul ? @world;
-    ul ? @el_mundo;
-    if (r ? @world) ispiši << @za_warudo;
-    formula k = _pr(#br, a_1);
-    formula l = []k;
-    k ? @world;
-    //ispiši << @world;
-    // ispiši << nuzno_a1 ? @el_mundo << nuzno_a1 ? @za_warudo;
-'''), 8)
-kod.izvrši()
+
+unos_programa("program2.txt")
