@@ -954,10 +954,14 @@ class Provjera(AST):
         if svijet := rt.mem['using'].nađi_svijet(self.svijet.sadržaj):
             t = ' ⊩ ' if self.ime.vrijednost().vrijednost(svijet) else ' ⊮ '
             print(svijet.sadržaj + t + self.ime.vrijednost().ispis())
+        elif 'temp' in rt.mem and rt.mem['temp'] == self.svijet:
+            return self.ime.vrijednost().vrijednost(rt.mem['temp'])
         else: raise SemantičkaGreška(f'Svijet {self.svijet.sadržaj} nije deklariran.')
     def vrijednost(self):
         if svijet := rt.mem['using'].nađi_svijet(self.svijet.sadržaj):
             return self.ime.vrijednost().vrijednost(svijet)
+        elif 'temp' in rt.mem and rt.mem['temp'] == self.svijet:
+            return self.ime.vrijednost().vrijednost(rt.mem['temp'])
         else: raise SemantičkaGreška(f'Svijet {self.svijet.sadržaj} nije deklariran.')
 
 class Forsira(AST):
