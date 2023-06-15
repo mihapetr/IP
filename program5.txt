@@ -21,3 +21,6 @@ z = _a(#c);
 ispiši<<z<<nr;
 
 vrati T;
+
+int #z = 13 ÷ 2;
+ispiši<<#z<<nr;

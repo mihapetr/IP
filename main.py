@@ -131,7 +131,7 @@ class T(TipoviTokena):
         "spremi",
     )
     INT, NAT, FORMULA = "int", "nat", "formula"
-    JEDNAKO, PLUS, MINUS, PUTA, NA, OSTATAK = "=+-*^%"
+    JEDNAKO, PLUS, MINUS, PUTA, NA, OSTATAK, DIJ = "=+-*^%÷"
     JJEDNAKO, PLUSP, PLUSJ, MINUSM, MINUSJ = "==", "++", "+=", "--", "-="
     MANJE, MMANJE, VEĆE = "<", "<<", ">"
 
@@ -262,6 +262,8 @@ def ml(lex):
             lex >> "/"
             lex - "\n"
             lex.zanemari()
+        elif znak == '÷':
+            yield lex.token(T.DIJ)
         elif znak == "#":
             lex >> str.isalpha
             lex * {str.isalnum, "_"}
@@ -301,7 +303,7 @@ def ml(lex):
 # parametri -> tip IME | parametri ZAREZ tip IME
 # for_operator -> MANJE | VEĆE ##NAPOMENA: ovdje nadodati ako zelimo jos nesto u for_operatoru (možda još !=)
 # izraz -> član | izraz (PLUS|MINUS) član
-# član -> faktor | član PUTA faktor
+# član -> faktor | član PUTA faktor | član DIJ faktor | član OSTATAK faktor
 # faktor -> baza | baza NA faktor | MINUS faktor
 # baza -> BROJ | IME(aritmetičkog tipa) | O_OTV izraz O_ZATV
 # promjena -> PLUSP | MINUSM | PLUSJ izraz | MINUSJ izraz
@@ -621,7 +623,7 @@ class P(Parser):
 
     def član(p):
         t = p.faktor()
-        while op := p >= {T.PUTA, T.OSTATAK}:
+        while op := p >= {T.PUTA, T.OSTATAK, T.DIJ}:
             t = Op(op, t, p.faktor())
         return t
 
@@ -1197,6 +1199,8 @@ class Op(AST):
             return l * d
         elif o ^ T.OSTATAK:
             return l % d
+        elif o ^ T.DIJ:
+            return int (l / d)
 
 
 class Potencija(AST):
@@ -1555,4 +1559,5 @@ def main():
             pass  # ignoriramo bezvezno unošenje novih redova
 
 
-unos_programa("program5.txt")
+# unos_programa("program5.txt")
+main()
