@@ -1,0 +1,51 @@
+int #a = 3;
+nat #b = 2; // probati #b = -1
+
+int #c = (#a * #b) - 1 + 8 % 2;
+ispiši << #c << nr;
+
+for (#i = 0; #i < 15; #i++) { // moze i #i += 1 ili #i -=1
+	if (#i == 8) continue;
+	if (#i == 4) { // uociti da if i else imaju mogucnost izvrsavanja vise naredbi (blok)
+		ispiši << 4444 << nr;
+	} else {
+		ispiši << #i << nr;
+	}
+	if (#i == 10) break;
+} 
+
+// prije ulaska u funkciju
+ispiši << #a << nr;
+ispiši << #c << nr;
+
+fun _b(int #a) {
+	#a = 1000;
+	ispiši << #a << nr;
+}
+
+// pokusati redeklarirati funkciju _b radi uocavanja greske
+// fun _b(int #c) {
+//	ispiši << #c << nr;
+//}
+
+
+// radi poziv neke druge funkcije unutar već postojeće
+fun _a(int #a) {
+	#a = 7;
+	ispiši << #a << nr;
+	int #c = 2 ^ 8;
+	_b(#c);
+	ispiši << #c << nr;
+}
+
+_a(#a);
+
+// nakon poziva funkcije
+
+ispiši << #a << nr;
+ispiši << #c << nr;
+
+formula f1 = ($P0 -> $P1);
+ispiši << f1 << nr;
+
+// _a(f1); // pokušati ovo ovdje radi poruke o grešci

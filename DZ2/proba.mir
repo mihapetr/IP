@@ -1,0 +1,36 @@
+fun _f(formula f) {
+    f = ($P0 -> $P10);
+    ispiši << f << nr;
+    int #i = 5;
+
+    // if (#i == 5) vrati T;
+    ispiši << #i << nr;
+
+
+    for (#j = 0; #j < 10; #j++) {
+
+        for (#k = 4; #k < 6; #k++) {
+            if (#k == 4) {
+                vrati F;
+            }
+        }
+
+        if (#j == 5) {
+            vrati T;
+        }
+        ispiši << #j << nr;
+    }
+
+    ispiši << #i << nr;
+    vrati F;
+}
+
+formula g = ($P0 -> $P1111);
+
+ispiši << g << nr;
+
+g = _f(g);
+
+ispiši << g << nr;
+
+vrati T;

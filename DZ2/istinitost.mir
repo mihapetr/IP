@@ -1,0 +1,40 @@
+koristi Model {@t1, @t2, @t3, @t4, @t5; $z1, $z2, $z3};
+unesi << "krizanje_rel.mir" << "krizanje_val.mir";
+
+formula f = ~($z1 -> $z2);
+formula g = ([]f <-> <>f);
+formula t = T;
+
+fun _f (formula f, formula h) {
+    f = []($z2 | $z3);
+    ispiši << f << nr << h << nr;
+    h = f;
+    ispiši << h << nr;
+    if (h ? @t3)
+        vrati T;
+    else 
+        vrati F;
+}
+
+// Pozivom funkcije ne mijenjaju se vrijednosti ni od f ni od g.
+t = _f(g, f);
+
+ispiši << f << nr << g << nr << t << nr;
+
+ispiši << Model;
+fun _provjeri(formula t) {
+    formula neg = ~t;
+    foreach @w {
+        if ( neg ? @w) vrati T;
+    }
+    vrati T;
+}
+
+// Provjerom formule f ona isto tako ostaje neizmijenjena.
+// Opet vidimo i da je naziv parametara potpuno nebitan, jer funkcije koriste drugi
+// namespace, i zato formula t ostane neizmijenjena.
+ispiši << t << nr;
+t = _provjeri(f);
+ispiši << f << t << nr;
+
+spremi Model;

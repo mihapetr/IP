@@ -1,0 +1,31 @@
+fun _b(formula f, formula g) {
+ispiši << f << nr << g << nr;
+f = $P0;
+ispiši<<f << nr << g << nr;
+}
+
+fun _c(int #p) {
+#p = -11;
+ispiši << #p << nr;
+}
+
+fun _a(int #b) {
+ispiši<< #b << nr;
+_c(#b);
+ispiši<< #b << nr;
+#b = 3;
+ispiši<< #b << nr;
+vrati T;
+}
+
+int #b = 1;
+int #c = 3;
+ispiši<<#b << nr;
+_a(#b);
+ispiši<<#b << nr;
+
+formula f = ($P0 -> $P1);
+formula g = ($P3 <-> $P1);
+ispiši << f << nr << g << nr;
+_b(f, g);
+ispiši << f << nr << g << nr;

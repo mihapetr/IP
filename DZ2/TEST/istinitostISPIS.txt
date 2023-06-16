@@ -1,0 +1,10 @@
+■($z₂∨$z₃)
+¬($z₁→$z₂)
+■($z₂∨$z₃)
+¬($z₁→$z₂)
+(■¬($z₁→$z₂)↔◆¬($z₁→$z₂))
+T
+Model: { @t₃ @t₂ @t₁ @t₅ @t₄; $z₁ $z₃ $z₂ }
+T
+¬($z₁→$z₂) T
+Podaci o relaciji i valuaciji modela Model su spremljeni u datoteke rel_datModel.mir i val_datModel.mir.
