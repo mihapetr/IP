@@ -6,30 +6,39 @@
 // Karakteristicna prop. varijabla za svijet @w nazvana je $_w te je istinita
 // samo na svijetu @w.
 
-koristi KP { @w1, @w2, @w3, @w4; $p1, $p2, $p3, $p4, $_w1, $_w2, $_w3, $_w4 };
+// Koristimo dodatni svijet @pv na kojem su istinite samo one prop. varijable koje su
+// karakteristicne, radi jednostavnijeg dohvata tih prop. var.
+
+koristi KP { @w1, @w2, @w3, @w4, @pv; $p1, $p2, $p3, $p4, $_w1, $_w2, $_w3, $_w4, $_pv };
 unesi << "kar_pvars_rel.mir" << "kar_pvars_val.mir";
 
-formula kar = T;
+formula kar = F;
 formula test = []($p1 | $p2);
 formula tmp = F;
 
-foreach $p {
-    tmp = $p;
-    if (tmp ? @w3)
-        ispiši << tmp;
-}
-
-ispiši << nr << nr;
+// Izdvajamo neki svijet u kojem je istinita formula test (to je ovdje samo @w4).
 foreach @w {
     if (test ? @w) {
         foreach $p {
             tmp = $p;
-            ispiši << tmp;
-            //ispiši << @w;
-            if (tmp ? @w)
-                kar = tmp;
+            if (tmp ? @w) {
+                if (tmp ? @pv) 
+                    kar = tmp;
+            }
         }
     }
 }
 
-ispiši << kar << tmp << nr;
+ispiši << kar << nr; // ovdje bi se trebalo ispisati $_w4
+
+// Sada je u varijablu kar "spremljen" svijet @w4 te ga lako mozemo koristiti.
+// Recimo da pozelimo ispisati onaj svijet za kojeg je istinita formula test.
+
+foreach @w {
+    if (kar ? @w) {
+        tmp = $_pv;
+        if (tmp ? @w)
+            continue;
+        else ispiši << @w;
+    }
+}

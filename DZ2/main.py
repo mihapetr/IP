@@ -78,7 +78,10 @@ class T(TipoviTokena):
             return self.sadržaj
 
         def ispis(self):
-            za_ispis = self.sadržaj + ": {"
+            if "temp_svijet" in rt.mem and rt.mem["temp_svijet"][0] == self:
+                za_ispis = rt.mem["temp_svijet"][1] + ": {"
+            else:
+                za_ispis = self.sadržaj + ": {"
             for sljedbenik in self.sljedbenici:
                 za_ispis += " " + sljedbenik.sadržaj
             za_ispis += "; "
@@ -918,6 +921,7 @@ class Foreach_petlja(AST):
     def izvrši(self):
         if "using" not in rt.mem:
             raise SemantičkaGreška("Potrebno je prvo deklarirati model!")
+        memo = rt.mem if fun == "__main__" else rt.lm[fun]
         for element in (
             rt.mem["using"].nosač if self.ime ^ T.SVIJET else rt.mem["using"].pvars
         ):
@@ -925,9 +929,9 @@ class Foreach_petlja(AST):
                 if self.ime ^ T.SVIJET:
                     self.ime.sljedbenici = element.sljedbenici
                     self.ime.činjenice = element.činjenice
-                    rt.mem["temp_svijet"] = self.ime
+                    memo["temp_svijet"] = [self.ime, element.sadržaj]
                 elif self.ime ^ T.PVAR:
-                    rt.mem["temp_pvar"] = [element, self.ime]
+                    memo["temp_pvar"] = [element, self.ime]
                 else:
                     raise SemantičkaGreška(
                         "Nepodržan tip podatka unutar foreach petlje!"
@@ -938,7 +942,7 @@ class Foreach_petlja(AST):
             except PrekidContinue:
                 continue
 
-        del rt.mem["temp_svijet" if self.ime ^ T.SVIJET else "temp_pvar"]
+        del memo["temp_svijet" if self.ime ^ T.SVIJET else "temp_pvar"]
 
 
 class For_Petlja(AST):
@@ -1014,7 +1018,7 @@ class Ispis(AST):
                 if svijet := rt.mem["using"].nađi_svijet(varijabla.sadržaj):
                     print(svijet.ispis())
                 elif "temp_svijet" in rt.mem:
-                    print(rt.mem["temp_svijet"].ispis())
+                    print(rt.mem["temp_svijet"][0].ispis())
                 else:
                     raise SemantičkaGreška(
                         f"Svijet {varijabla.sadržaj} nije deklariran."
@@ -1108,6 +1112,11 @@ class Pridruživanje(AST):
                     raise SemantičkaGreška(
                         "Greška: nepravilno pridruživanje varijabli formula!"
                     )
+                elif (
+                    "temp_pvar" in rt.mem
+                    and rt.mem["temp_pvar"][1] == pridruživanje.vrij
+                ):
+                    memo[pridruživanje.varijabla][0] = rt.mem["temp_pvar"][0]
                 else:
                     memo[pridruživanje.varijabla][0] = pridruživanje.vrij.pozovi()
         else:
@@ -1327,16 +1336,16 @@ class Provjera(AST):
         if svijet := rt.mem["using"].nađi_svijet(self.svijet.sadržaj):
             t = " ⊩ " if self.ime.vrijednost().vrijednost(svijet) else " ⊮ "
             print(svijet.sadržaj + t + self.ime.vrijednost().ispis())
-        elif "temp_svijet" in rt.mem and rt.mem["temp_svijet"] == self.svijet:
-            return self.ime.vrijednost().vrijednost(rt.mem["temp_svijet"])
+        elif "temp_svijet" in rt.mem and rt.mem["temp_svijet"][0] == self.svijet:
+            return self.ime.vrijednost().vrijednost(rt.mem["temp_svijet"][0])
         else:
             raise SemantičkaGreška(f"Svijet {self.svijet.sadržaj} nije deklariran.")
 
     def vrijednost(self):
         if svijet := rt.mem["using"].nađi_svijet(self.svijet.sadržaj):
             return self.ime.vrijednost().vrijednost(svijet)
-        elif "temp_svijet" in rt.mem and rt.mem["temp_svijet"] == self.svijet:
-            return self.ime.vrijednost().vrijednost(rt.mem["temp_svijet"])
+        elif "temp_svijet" in rt.mem and rt.mem["temp_svijet"][0] == self.svijet:
+            return self.ime.vrijednost().vrijednost(rt.mem["temp_svijet"][0])
         else:
             raise SemantičkaGreška(f"Svijet {self.svijet.sadržaj} nije deklariran.")
 
