@@ -1358,10 +1358,24 @@ class Forsira(AST):
     def izvrši(self):
         if svijet := rt.mem["using"].nađi_svijet(self.svijet.sadržaj):
             for pvar in self.pvars:
+                if "temp_pvar" in rt.mem and rt.mem["temp_pvar"][1] == pvar:
+                    pvarToAdd = rt.mem["temp_pvar"][0]
+                else:
+                    pvarToAdd = pvar
                 if self.simbol ^ T.FORSIRA:
-                    svijet.činjenice.add(pvar)
+                    svijet.činjenice.add(pvarToAdd)
                 elif self.simbol ^ T.NEFORSIRA:
-                    svijet.činjenice.discard(pvar)
+                    svijet.činjenice.discard(pvarToAdd)
+        elif "temp_svijet" in rt.mem and rt.mem["temp_svijet"][0] == self.svijet:
+            for pvar in self.pvars:
+                if "temp_pvar" in rt.mem and rt.mem["temp_pvar"][1] == pvar:
+                    pvarToAdd = rt.mem["temp_pvar"][0]
+                else:
+                    pvarToAdd = pvar
+                if self.simbol ^ T.FORSIRA:
+                    rt.mem["temp_svijet"][0].činjenice.add(pvarToAdd)
+                elif self.simbol ^ T.NEFORSIRA:
+                    rt.mem["temp_svijet"][0].činjenice.discard(pvarToAdd)
         else:
             raise SemantičkaGreška(f"Svijet {self.svijet.sadržaj} nije deklariran.")
 
@@ -1372,14 +1386,23 @@ class Vrijedi(AST):
     simbol: "T.VRIJEDI | T.NEVRIJEDI"
 
     def izvrši(self):
+        if "temp_pvar" in rt.mem and rt.mem["temp_pvar"][1] == self.pvar:
+            pvar = rt.mem["temp_pvar"][0]
+        else:
+            pvar = self.pvar
         for s in self.svjetovi:
             if svijet := rt.mem["using"].nađi_svijet(s.sadržaj):
                 if self.simbol ^ T.VRIJEDI:
-                    svijet.činjenice.add(self.pvar)
+                    svijet.činjenice.add(pvar)
                 elif self.simbol ^ T.NEVRIJEDI:
-                    svijet.činjenice.discard(self.pvar)
+                    svijet.činjenice.discard(pvar)
+            elif "temp_svijet" in rt.mem and rt.mem["temp_svijet"][0] == s:
+                if self.simbol ^ T.VRIJEDI:
+                    rt.mem["temp_svijet"][0].činjenice.add(pvar)
+                elif self.simbol ^ T.NEVRIJEDI:
+                    rt.mem["temp_svijet"][0].činjenice.discard(pvar)
             else:
-                raise SemantičkaGreška(f"Svijet {self.svijet.sadržaj} nije deklariran.")
+                raise SemantičkaGreška(f"Svijet {s.sadržaj} nije deklariran.")
 
 
 def optimiziraj(formula):  # to be used in version 2.0

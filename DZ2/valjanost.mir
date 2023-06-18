@@ -3,9 +3,20 @@
 // valuacijska datoteka, nego samo relacijska, te nam je dovoljna jedna prop. varijabla.
 
 koristi Model { @w1, @w2, @w3, @w4, @w5; $p };
-unesi << "valjanost_rel.mir";
+unesi << "valjanost_rel.mir" << "valjanost_val.mir";
 
-formula f = (<>[]$p -> $p);
+formula f = ([]$p -> $p);
+// Ova formula odgovara modelu na kojem je relacija dostizivosti simetricna. Evo jos nekih
+// primjera formula i svojstava relacije kojima odgovara njihova valjanost:
+// []$p -> $p               refleksivna
+// []$p -> [][]$p           tranzitivna
+// []([]$p -> $p) -> []p    tranzitivna + inv. dobro utemeljena (u kon. modelu = nema ciklusa)
+// [][]$p -> []$p           slabo gusta (wRu => Ex v. wRvRu (v smije biti jednak w ili u))
+// <>$p -> []$p             parcijalna funkcija
+// <>$p <-> []$p            funkcija
+// []$p                     prazna
+// <>$p -> []<>$p           euklidska (uRv & vRw => uRw)
+
 formula rezultat = F;
 int #bin = 0;
 int #temp = 0;
@@ -32,13 +43,12 @@ for (#i = 0; #i < 2^(#m * #n); #i++) {
 
     foreach $var {
         foreach @svijet {
-
             #bin = #temp % 2;
 
-            if (#bin == 1) $var -|| @svijet; 
+            if (#bin == 1) $var -|| @svijet;
             else $var ~| @svijet;
 
-            #temp = #bin ÷ 2;
+            #temp = #temp ÷ 2;
         }
     }
 
@@ -48,8 +58,8 @@ for (#i = 0; #i < 2^(#m * #n); #i++) {
     else break;
 }
 
-// Sada rezultat iznosi T ako je f valjana, a F ako nije.
-ispiši << rezultat << nr;
+// Sada rezultat iznosi T ako je f valjana (tj. ako je relacija simetricna), a F ako nije.
+ispiši << f << rezultat << nr;
 
 // Valuaciju za koju smo nasli neistinitu formulu spremamo u datoteku.
 spremi Model;
