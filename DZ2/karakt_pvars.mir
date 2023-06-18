@@ -15,15 +15,22 @@ unesi << "kar_pvars_rel.mir" << "kar_pvars_val.mir";
 formula kar = F;
 formula test = []($p1 | $p2);
 formula tmp = F;
+int #done = 0;
 
-// Izdvajamo neki svijet u kojem je istinita formula test (to je ovdje samo @w4).
+// Izdvajamo prvi svijet u kojem je istinita formula test (to je ovdje samo @w4).
 foreach @w {
+    if (#done == 1) break;
     if (test ? @w) {
+        tmp = $_pv;
+        if (tmp ? @w) continue;
         foreach $p {
             tmp = $p;
             if (tmp ? @w) {
-                if (tmp ? @pv) 
+                if (tmp ? @pv) {
                     kar = tmp;
+                    #done = 1;
+                    break;
+                }
             }
         }
     }
