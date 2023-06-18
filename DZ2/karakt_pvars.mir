@@ -6,7 +6,7 @@
 // Karakteristicna prop. varijabla za svijet @w nazvana je $_w te je istinita
 // samo na svijetu @w.
 
-// Koristimo dodatni svijet @pv na kojem su istinite samo one prop. varijable koje su
+// Koristimo pomocni svijet @pv na kojem su istinite samo one prop. varijable koje su
 // karakteristicne, radi jednostavnijeg dohvata tih prop. var.
 
 koristi KP { @w1, @w2, @w3, @w4, @pv; $p1, $p2, $p3, $p4, $_w1, $_w2, $_w3, $_w4, $_pv };
@@ -48,4 +48,33 @@ foreach @w {
             continue;
         else ispiši << @w;
     }
+}
+
+// Jos jedna primjena karakteristicnih prop. varijabli je trazenje sljedbenika odnosno
+// prethodnika pojedinog svijeta.
+
+// Trazimo sljedbenike od @w2 (to su @w3 i @w4):
+ispiši << nr << nr;
+foreach $p {
+    tmp = <>$p;
+    if (tmp ? @w2) {
+        kar = $p;
+        if (kar ? @pv) {
+            foreach @w {
+                if (kar ? @w) {
+                    tmp = $_pv;
+                    if (tmp ? @w)
+                        continue;
+                    else ispiši << @w;
+                }
+            }
+        }
+    }
+}
+
+// Trazimo prethodnike od @w3 (to su @w1, @w2 i @w3):
+ispiši << nr << nr;
+foreach @w {
+    tmp = <>$_w3;
+    if (tmp ? @w) ispiši << @w;
 }
