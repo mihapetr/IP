@@ -1,0 +1,35 @@
+// U ovom programu demonstriramo uporabu karakteristicnih propozicionalnih
+// varijabli. Kako nije omoguceno spremanje svjetova u varijablu, ako zelimo 
+// "zapamtiti" neki svijet mozemo spremiti njegovu karakteristicnu prop. var.
+// u formulu te iteriranjem po svjetovima kasnije dohvatiti trazeni svijet.
+
+// Karakteristicna prop. varijabla za svijet @w nazvana je $_w te je istinita
+// samo na svijetu @w.
+
+koristi KP { @w1, @w2, @w3, @w4; $p1, $p2, $p3, $p4, $_w1, $_w2, $_w3, $_w4 };
+unesi << "kar_pvars_rel.mir" << "kar_pvars_val.mir";
+
+formula kar = T;
+formula test = []($p1 | $p2);
+formula tmp = F;
+
+foreach $p {
+    tmp = $p;
+    if (tmp ? @w3)
+        ispiši << tmp;
+}
+
+ispiši << nr << nr;
+foreach @w {
+    if (test ? @w) {
+        foreach $p {
+            tmp = $p;
+            ispiši << tmp;
+            //ispiši << @w;
+            if (tmp ? @w)
+                kar = tmp;
+        }
+    }
+}
+
+ispiši << kar << tmp << nr;

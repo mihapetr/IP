@@ -12,6 +12,7 @@ class PrekidBreak(NelokalnaKontrolaToka):
 class PrekidContinue(NelokalnaKontrolaToka):
     """Signal koji šalje naredba continue."""
 
+
 class PrekidVrati(NelokalnaKontrolaToka):
     """Signal koji šalje naredba vrati."""
 
@@ -27,12 +28,16 @@ class T(TipoviTokena):
             return self
 
         def ispis(self):
+            if "temp_pvar" in rt.mem and rt.mem["temp_pvar"][1] == self:
+                return rt.mem["temp_pvar"][0].sadržaj.translate(subskript)
             return self.sadržaj.translate(subskript)
 
         def optim1(self):
             return self
 
         def vrijednost(self, w):
+            if "temp_pvar" in rt.mem and rt.mem["temp_pvar"][1] == self:
+                return rt.mem["temp_pvar"][0] in w.činjenice
             return self in w.činjenice
 
         def pozovi(self):
@@ -153,7 +158,9 @@ class T(TipoviTokena):
             return rt.mem[self][1] if fun == "__main__" else rt.lm[fun][self][1]
 
         def ispis(self):
-            if len(rt.mem[self]) == 1: # ovo je za varijablu u for petlji -> ne deklarira se s tipom pa je drugi element liste uvijek prazan
+            if (
+                len(rt.mem[self]) == 1
+            ):  # ovo je za varijablu u for petlji -> ne deklarira se s tipom pa je drugi element liste uvijek prazan
                 return rt.mem[self][0]
             elif rt.mem[self][1] ^ {T.INT, T.NAT}:
                 return self.vrijednost()
@@ -848,7 +855,7 @@ class Poziv_funkcije(AST):
 
         kopija_memorije = rt.mem
         lokalna_memorija = Memorija()
-        if 'using' in rt.mem:
+        if "using" in rt.mem:
             lokalna_memorija["using"] = rt.mem["using"]
 
         i = 0
@@ -870,7 +877,7 @@ class Poziv_funkcije(AST):
                             raise GreškaIzvođenja(
                                 f"{fja.ime} nije dobila kompatibilne parametre!"
                             )
-                    
+
                     value = []
                     value.append(rt.mem[argument][0])
                     value.append(rt.mem[argument][1])
@@ -900,7 +907,8 @@ class Funkcija(AST):
 
         try:
             self.blok.izvrši()
-        except PrekidVrati: return
+        except PrekidVrati:
+            return
 
 
 class Foreach_petlja(AST):
@@ -910,7 +918,6 @@ class Foreach_petlja(AST):
     def izvrši(self):
         if "using" not in rt.mem:
             raise SemantičkaGreška("Potrebno je prvo deklarirati model!")
-
         for element in (
             rt.mem["using"].nosač if self.ime ^ T.SVIJET else rt.mem["using"].pvars
         ):
@@ -918,9 +925,9 @@ class Foreach_petlja(AST):
                 if self.ime ^ T.SVIJET:
                     self.ime.sljedbenici = element.sljedbenici
                     self.ime.činjenice = element.činjenice
-                    rt.mem["temp"] = self.ime
+                    rt.mem["temp_svijet"] = self.ime
                 elif self.ime ^ T.PVAR:
-                    rt.mem["temp"] = element
+                    rt.mem["temp_pvar"] = [element, self.ime]
                 else:
                     raise SemantičkaGreška(
                         "Nepodržan tip podatka unutar foreach petlje!"
@@ -931,7 +938,7 @@ class Foreach_petlja(AST):
             except PrekidContinue:
                 continue
 
-        del rt.mem["temp"]
+        del rt.mem["temp_svijet" if self.ime ^ T.SVIJET else "temp_pvar"]
 
 
 class For_Petlja(AST):
@@ -989,7 +996,8 @@ class Blok(AST):
         for naredba in blok.naredbe:
             try:
                 naredba.izvrši()
-            except PrekidVrati: raise PrekidVrati
+            except PrekidVrati:
+                raise PrekidVrati
 
 
 class Ispis(AST):
@@ -998,15 +1006,15 @@ class Ispis(AST):
     def izvrši(ispis):
         for varijabla in ispis.varijable:
             if varijabla ^ {T.INT, T.NAT, T.FORMULA, T.BROJ, T.IME}:
-                if "temp" in rt.mem:
-                    print(rt.mem["temp"].ispis())
+                if "temp_pvar" in rt.mem and rt.mem["temp_pvar"][1] == varijabla:
+                    print(rt.mem["temp_pvar"][0].ispis())
                 else:
                     print(varijabla.ispis(), end=" ")
             elif varijabla ^ {T.SVIJET}:
                 if svijet := rt.mem["using"].nađi_svijet(varijabla.sadržaj):
                     print(svijet.ispis())
-                elif "temp" in rt.mem:
-                    print(rt.mem["temp"].ispis())
+                elif "temp_svijet" in rt.mem:
+                    print(rt.mem["temp_svijet"].ispis())
                 else:
                     raise SemantičkaGreška(
                         f"Svijet {varijabla.sadržaj} nije deklariran."
@@ -1319,16 +1327,16 @@ class Provjera(AST):
         if svijet := rt.mem["using"].nađi_svijet(self.svijet.sadržaj):
             t = " ⊩ " if self.ime.vrijednost().vrijednost(svijet) else " ⊮ "
             print(svijet.sadržaj + t + self.ime.vrijednost().ispis())
-        elif "temp" in rt.mem and rt.mem["temp"] == self.svijet:
-            return self.ime.vrijednost().vrijednost(rt.mem["temp"])
+        elif "temp_svijet" in rt.mem and rt.mem["temp_svijet"] == self.svijet:
+            return self.ime.vrijednost().vrijednost(rt.mem["temp_svijet"])
         else:
             raise SemantičkaGreška(f"Svijet {self.svijet.sadržaj} nije deklariran.")
 
     def vrijednost(self):
         if svijet := rt.mem["using"].nađi_svijet(self.svijet.sadržaj):
             return self.ime.vrijednost().vrijednost(svijet)
-        elif "temp" in rt.mem and rt.mem["temp"] == self.svijet:
-            return self.ime.vrijednost().vrijednost(rt.mem["temp"])
+        elif "temp_svijet" in rt.mem and rt.mem["temp_svijet"] == self.svijet:
+            return self.ime.vrijednost().vrijednost(rt.mem["temp_svijet"])
         else:
             raise SemantičkaGreška(f"Svijet {self.svijet.sadržaj} nije deklariran.")
 
@@ -1365,7 +1373,7 @@ class Vrijedi(AST):
                 raise SemantičkaGreška(f"Svijet {self.svijet.sadržaj} nije deklariran.")
 
 
-def optimiziraj(formula): # to be used in version 2.0
+def optimiziraj(formula):  # to be used in version 2.0
     """Pretvara formulu (AST) u formulu koja od veznika ima samo kondicional i negaciju; prije te pretvorbe su još uklonjene dvostruke negacije"""
 
     nova = formula.optim()
@@ -1384,7 +1392,8 @@ def jednaki(f1, f2):
 
 # provjerava je li formula f shema aksioma A1
 
-def shemaA1(f): # to be used in version 2.0
+
+def shemaA1(f):  # to be used in version 2.0
     optimiziraj(f)
     f.ispis()
     print()
@@ -1399,15 +1408,15 @@ def shemaA1(f): # to be used in version 2.0
 
 # potrebna memorija
 fun = "__main__"
-rt.mem = Memorija() # memorija za glavni program ("main")
-rt.lm = Memorija() # lokalna memorija za funkcije
-rt.fje = Memorija(redefinicija=False) # u njoj se deklariraju funkcije 
-
+rt.mem = Memorija()  # memorija za glavni program ("main")
+rt.lm = Memorija()  # lokalna memorija za funkcije
+rt.fje = Memorija(redefinicija=False)  # u njoj se deklariraju funkcije
 
 
 ### ISPOD JE SVE ZA REALIZACIJU KORISNIČKOG UNOSA ###
 
-def unos_dokaza(ime_txt_dat): # to be used in version 2.0
+
+def unos_dokaza(ime_txt_dat):  # to be used in version 2.0
     with open(ime_txt_dat, "r") as file:
         lines = file.readlines()
 
@@ -1424,7 +1433,7 @@ def unos_dokaza(ime_txt_dat): # to be used in version 2.0
     P(naredbe).izvrši()
 
 
-def unos_programa(ime_txt_dat): 
+def unos_programa(ime_txt_dat):
     with open(ime_txt_dat, "r") as file:
         lines = file.readlines()
     naredbe = ""
@@ -1433,7 +1442,9 @@ def unos_programa(ime_txt_dat):
 
     P(naredbe).izvrši()
 
+
 ######################### interaktivni način rada ###############################
+
 
 def main():
     print(10 * "-" + " MODALNA LOGIKA " + 10 * "-")
@@ -1496,7 +1507,8 @@ def main():
         elif line == "":
             pass
 
-# unos_programa("program.txt") # ovako se isto moze unositi iz .txt filea, radi jednostavnosti. Dovoljno je napisati u argument funkcije unos_programa ime .txt datoteke u kojoj 
+
+# unos_programa("program.txt") # ovako se isto moze unositi iz .txt filea, radi jednostavnosti. Dovoljno je napisati u argument funkcije unos_programa ime .txt datoteke u kojoj
 # ste natipkali program, a koja mora biti u istoj datoteci kao ovaj main.py
 
 # vjerojatno se pitate zašto kompliciramo s .mir ekstenzijom u interaktivnom načinu rada. E pa odgonetnite sami :D (hint: početak dokumentacije...)
