@@ -1,7 +1,7 @@
 koristi Model {@t1, @t2, @t3, @t4, @t5; $z1, $z2, $z3};
 unesi << "krizanje_rel.mir" << "krizanje_val.mir";
 
-formula f = ~($z1 -> $z2);
+formula f = ($z1 -> $z2);
 formula g = ([]f <-> <>f);
 formula t = T;
 
@@ -25,7 +25,11 @@ ispiši << Model;
 fun _provjeri(formula t) {
     formula neg = ~t;
     foreach @w {
-        if ( neg ? @w) vrati T;
+        if ( neg ? @w) {
+            // Ispisujemo svijet na kojem formula ne vrijedi, ako takav postoji.
+            ispiši << @w; 
+            vrati F;
+        }
     }
     vrati T;
 }

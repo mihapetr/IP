@@ -1,0 +1,55 @@
+// U ovom primjeru provjeravamo valjanost formule f na cijelom Kripkeovom okviru, tako da
+// provjerimo istinitost na svim modelima, neovisno o valuaciji. Dakle, ne treba nam 
+// valuacijska datoteka, nego samo relacijska, te nam je dovoljna jedna prop. varijabla.
+
+koristi Model { @w1, @w2, @w3, @w4, @w5; $p };
+unesi << "valjanost_rel.mir";
+
+formula f = (<>[]$p -> $p);
+formula rezultat = F;
+int #bin = 0;
+int #temp = 0;
+int #m = 0;
+int #n = 0;
+
+// Brojimo koliko ima prop. varijabli odnosno svjetova.
+foreach $pvar #m = #m + 1;
+foreach @world #n = #n + 1;
+
+ispiši << #m << #n << nr;
+
+fun _provjeri(formula t) {
+    formula neg = ~t;
+    foreach @w {
+        if (neg ? @w) vrati F;
+    }
+    vrati T;
+}
+
+for (#i = 0; #i < 2^(#m * #n); #i++) {
+
+    #temp = #i;
+
+    foreach $var {
+        foreach @svijet {
+
+            #bin = #temp % 2;
+
+            if (#bin == 1) $var -|| @svijet; 
+            else $var ~| @svijet;
+
+            #temp = #bin ÷ 2;
+        }
+    }
+
+    rezultat = _provjeri(f);
+
+    if (rezultat ? @w1) continue;
+    else break;
+}
+
+// Sada rezultat iznosi T ako je f valjana, a F ako nije.
+ispiši << rezultat << nr;
+
+// Valuaciju za koju smo nasli neistinitu formulu spremamo u datoteku.
+spremi Model;

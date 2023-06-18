@@ -38,8 +38,8 @@ foreach @w {
 
 ispiši << kar << nr; // ovdje bi se trebalo ispisati $_w4
 
-// Sada je u varijablu kar "spremljen" svijet @w4 te ga lako mozemo koristiti.
-// Recimo da pozelimo ispisati onaj svijet za kojeg je istinita formula test.
+// Sada je u varijablu `kar` "spremljen" svijet @w4 te ga lako mozemo koristiti. Recimo da 
+// pozelimo ispisati onaj svijet za kojeg je istinita formula test (i ne znamo da je to @w4).
 
 foreach @w {
     if (kar ? @w) {
