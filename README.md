@@ -2,6 +2,8 @@
 
 Projekt iz kolegija ***Interpretacija programa*** u kojem će biti implementiran softver za praktičan rad s osnovnim objektima Modalne logike (propozicionalne varijable, modalne formule, Kripkeovi modeli, valuacije...). Potpuna prilagođenost softvera sintaksi Modalne logike omogućit će i proučavanje njezine semantike, a samim time i dobivanje osnovnih teorijskih rezultata što je i sama svrha razvoja ovog softvera. Ipak, prvo je potrebno promotriti njegove karakteristike i mogućnosti.
 
+[Dokumentacija](Modalna.pdf)
+
 ## 1. Interaktivni način rada
 * poslije svake naredbe dolazi znak `;`
 * ako korisnik unese liniju na kraju koje ne stoji `;`, ispisuje se nešto poput `...` kao naznaka za prelazak u novi red
